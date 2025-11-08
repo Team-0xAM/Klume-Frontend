@@ -84,7 +84,7 @@
     <div class="bottom-user">
       <div class="user-info">
         <img src="@/assets/icons/icon_user.png" alt="user" class="user-icon" />
-        <span>김민지</span>
+        <span>라이언</span>
       </div>
       <img
         src="@/assets/icons/icon_navigation.png"

@@ -28,7 +28,7 @@ const router = useRouter()
 const isLoggedIn = ref(false)
 const userEmail = ref('')
 
-// ✅ 예시용 토큰/이메일 확인 로직
+// 예시용 토큰/이메일 확인 로직
 onMounted(() => {
   const token = localStorage.getItem('accessToken')
   const email = localStorage.getItem('userEmail')
