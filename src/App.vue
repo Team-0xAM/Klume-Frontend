@@ -1,9 +1,10 @@
 <script setup>
 import { RouterView } from 'vue-router';
+import BaseHeader from './components/common/BaseHeader.vue';
 </script>
 
 <template>
-  <!-- <Header /> -->
+  <BaseHeader />
   <RouterView />
   <!-- <Footer /> -->
 </template>

@@ -2,6 +2,7 @@
   <div class="test-container">
     <h1>공통 컴포넌트 테스트</h1>
 
+    <!-- BaseInput -->
     <section class="test-section">
       <h2>BaseInput</h2>
       <BaseInput v-model="email" placeholder="이메일" />
@@ -12,6 +13,7 @@
 
     <hr />
 
+    <!-- BaseButton -->
     <section class="test-section">
       <h2>BaseButton (남색 버튼)</h2>
       <BaseButton label="로그인" height="48" depth="bold" @click="onClick('로그인')" />
@@ -20,14 +22,26 @@
 
     <hr />
 
+    <!-- BaseGrayButton -->
     <section class="test-section">
       <h2>BaseGrayButton (회색 버튼)</h2>
-      <BaseGrayButton label="이전" height="44" @click="onClick('이전')" />
-      <BaseGrayButton label="취소" height="44" depth="bold" @click="onClick('취소')" />
+      <div class="button-row">
+        <BaseGrayButton label="이전" height="44" width="120" @click="onClick('이전')" />
+        <BaseGrayButton label="취소" height="44" width="140" depth="bold" @click="onClick('취소')" />
+      </div>
     </section>
 
     <hr />
 
+    <!-- BaseYellowButton -->
+    <section class="test-section">
+      <h2>BaseYellowButton (노란 버튼)</h2>
+      <BaseYellowButton label="시작하기" height="50" @click="onClick('시작하기')" />
+    </section>
+
+    <hr />
+
+    <!-- GoogleButton -->
     <section class="test-section">
       <h2>GoogleButton (OAuth 로그인용)</h2>
       <GoogleButton @click="onClick('Google 로그인')" />
@@ -36,18 +50,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import BaseInput from '@/components/common/BaseInput.vue';
-import BaseButton from '@/components/common/BaseButton.vue';
-import BaseGrayButton from '@/components/common/BaseGrayButton.vue';
-import GoogleButton from '@/components/common/GoogleButton.vue';
+import { ref } from 'vue'
+import BaseInput from '@/components/common/BaseInput.vue'
+import BaseButton from '@/components/common/BaseButton.vue'
+import BaseGrayButton from '@/components/common/BaseGrayButton.vue'
+import BaseYellowButton from '@/components/common/BaseYellowButton.vue'
+import GoogleButton from '@/components/common/GoogleButton.vue'
 
-const email = ref('');
-const password = ref('');
+const email = ref('')
+const password = ref('')
 
 const onClick = (label) => {
-  alert(`${label} 버튼 클릭됨`);
-};
+  alert(`${label} 버튼 클릭됨`)
+}
 </script>
 
 <style scoped>
@@ -71,7 +86,13 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
 }
 
 hr {
