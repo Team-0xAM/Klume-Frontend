@@ -1,8 +1,9 @@
 <template>
   <button
+    type="button"
     class="base-yellow-btn"
     :style="{ height: `${height}px`, fontSize: `${fontSize}px` }"
-    @click="$emit('click')"
+    @click.stop.prevent="handleClick"
   >
     {{ label }}
   </button>
@@ -20,6 +21,12 @@ defineProps({
     default: 18,
   },
 });
+
+const emit = defineEmits(['click']);
+
+const handleClick = (event) => {
+  emit('click', event);
+};
 </script>
 
 <style scoped>

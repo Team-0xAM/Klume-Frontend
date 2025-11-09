@@ -1,11 +1,17 @@
 <template>
-  <button class="google-btn" @click="$emit('click')">
+  <button type="button" class="google-btn" @click.stop.prevent="handleClick">
     <img src="@/assets/icons/icon_google.png" alt="Google" class="google-icon" />
     <span>Google 계정으로 로그인</span>
   </button>
 </template>
 
-<script setup></script>
+<script setup>
+const emit = defineEmits(['click']);
+
+const handleClick = (event) => {
+  emit('click', event);
+};
+</script>
 
 <style scoped>
 .google-btn {
