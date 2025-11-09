@@ -54,6 +54,34 @@ const organizations = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 
+// 더미 데이터
+const dummyData = [
+  {
+    id: 1,
+    name: '한화시스템 BEYOND SW캠프',
+    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
+    logo: '/assets/images/no_image.png',
+  },
+  {
+    id: 2,
+    name: '한화시스템 BEYOND SW캠프',
+    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
+    logo: '/assets/images/no_image.png',
+  },
+  {
+    id: 3,
+    name: '한화시스템 BEYOND SW캠프',
+    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
+    logo: '/assets/images/no_image.png',
+  },
+  {
+    id: 4,
+    name: '한화시스템 BEYOND SW캠프',
+    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
+    logo: '/assets/images/no_image.png',
+  },
+]
+
 // 조직 목록 불러오기
 const fetchOrganizations = async () => {
   isLoading.value = true
@@ -72,7 +100,9 @@ const fetchOrganizations = async () => {
     }))
   } catch (error) {
     console.error('[OrganizationView] 조직 목록 조회 실패:', error)
-    errorMessage.value = '조직 목록을 불러오는데 실패했습니다.'
+    console.log('[OrganizationView] 더미 데이터 사용')
+    // API 실패 시 더미 데이터 사용
+    organizations.value = dummyData
   } finally {
     isLoading.value = false
   }

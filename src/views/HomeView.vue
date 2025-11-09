@@ -31,9 +31,14 @@
     <!-- 이어지는 네이비 배경 영역 -->
     <section class="after-banner-section">
       <div class="after-content">
-        <!-- KLÜME의 해결 방식 or CTA 영역 -->
+        <h2 class="after-title">공간은 한정되어도, 기회는 평등해야 합니다.</h2>
+        <p class="after-desc">
+          KLÜME는 시간과 공간을 공정하게 나누는 문화를 만듭니다.<br />
+          예약의 순간조차 투명하게, 모두가 같은 조건에서.
+        </p>
       </div>
-    </section>
+</section>
+
   </div>
 </template>
 
@@ -152,7 +157,7 @@ const goLogin = () => {
 .after-banner-section {
   width: 100%;
   background-color: #0b174e;
-  height: 800px;
+  height: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -160,8 +165,40 @@ const goLogin = () => {
 
 .after-content {
   color: white;
-  font-size: 18px;
+  font-size: 25px;
   text-align: center;
   opacity: 0.8;
 }
+.after-banner-section {
+  width: 100%;
+  background-color: #0b174e;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+}
+
+.after-content {
+  color: white;
+  text-align: center;
+  padding: 0 20px;
+  max-width: 800px;
+}
+
+.after-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #ffffff;
+}
+
+.after-desc {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #e0e2f1;
+  font-weight: 400;
+}
+
 </style>
