@@ -4,14 +4,18 @@ import CommonTestView from "@/views/test/CommonTestView.vue";
 import SidebarTestView from '@/views/test/SidebarTestView.vue'
 import ModalTestView from "@/views/test/ModalTestView.vue";
 import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue";
-
+import MeetingRoomList from '@/components/room/MeetingRoomList.vue';
+import AdminRoomPage from '@/components/room/AdminRoomPage.vue';
 
 const routes = [
     {path: '/', component: HomeView},
     {path: '/test/common', component: CommonTestView},
     {path: '/test/sidebar', component: SidebarTestView},
     {path: '/test/modar', component: ModalTestView},
-    {path: '/test/orgcard', component: OrganizationListTestView}
+    {path: '/test/orgcard', component: OrganizationListTestView},
+
+    {path: '/roomlist', component: MeetingRoomList},
+    {path: '/adminroomlist', component: AdminRoomPage},
 ];
 
 const router = createRouter({
