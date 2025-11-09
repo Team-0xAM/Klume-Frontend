@@ -10,9 +10,6 @@
       />
     </div>
 
-    <!-- 구분선 -->
-    <div class="divider"></div>
-
     <!-- 내용 영역 -->
     <div class="org-info">
       <h3 class="org-title">{{ title }}</h3>
@@ -50,7 +47,7 @@ const goToOrganization = () => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -61,45 +58,46 @@ const goToOrganization = () => {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
+/* ✅ 이미지가 카드 상단을 꽉 채우게 */
 .org-image-wrapper {
   width: 100%;
-  aspect-ratio: 4 / 3; 
-  background-color: #f8f8f8;
+  height: 180px; /* 이미지 영역 고정 높이 */
+  background-color: #f8f9fb;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .org-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* 이미지가 영역을 가득 채우되 비율 유지 */
 }
 
-/* 구분선 */
-.divider {
-  height: 1px;
-  background-color: #e0e0e0;
-  width: 100%;
-}
-
-/* 텍스트 */
+/* ✅ 텍스트 영역 */
 .org-info {
-  padding: 16px;
+  padding: 14px 16px 18px;
+  background-color: #fff;
   text-align: left;
+  border-top: 1px solid #e6e8f0;
+  flex-shrink: 0;
 }
 
 .org-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #0c1c54;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 한 줄로 고정하고 ... 처리 */
 .org-desc {
-  font-size: 14px;
-  color: #666;
+  font-size: 13px;
+  color: #555e7b;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

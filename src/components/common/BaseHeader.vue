@@ -78,7 +78,7 @@ const handleLogout = () => {
   <header class="header">
     <!-- 로고 영역 -->
     <div class="logo" @click="goHome">
-      <span class="logo-text">K<span class="logo-umlaut">LÜ</span>ME</span>
+      <span class="logo-text">KL<span class="logo-umlaut">Ü</span>ME</span>
     </div>
 
     <!-- 오른쪽 영역 -->

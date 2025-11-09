@@ -40,9 +40,18 @@
 <script setup>
 import BaseYellowButton from '@/components/common/BaseYellowButton.vue'
 import { useRouter } from 'vue-router'
+import { isAuthenticated } from '@/utils/auth'
 
 const router = useRouter()
-const goLogin = () => router.push('/auth/login')
+
+const goLogin = () => {
+  // 로그인 상태면 organization 페이지로, 아니면 로그인 페이지로
+  if (isAuthenticated()) {
+    router.push('/organization')
+  } else {
+    router.push('/auth/login')
+  }
+}
 </script>
 
 <style scoped>

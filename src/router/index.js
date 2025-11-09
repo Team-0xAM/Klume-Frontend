@@ -8,6 +8,8 @@ import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue"
 import LoginView from "@/views/LoginView.vue";
 import SignupView from "@/views/SignupView.vue";
 import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
+import OrganizationView from "@/views/OrganizationView.vue";
+import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 
 
 const routes = [
@@ -21,6 +23,8 @@ const routes = [
     {path: '/auth/login', component: LoginView, meta: { requiresGuest: true }},
     {path: '/auth/signup', component: SignupView, meta: { requiresGuest: true }},
     {path: '/oauth/callback', component: OAuthCallbackView},
+    {path: '/organization', component: OrganizationView},
+    {path: '/organization/join', component: OrganizationJoinView}
 
 ];
 
