@@ -13,8 +13,8 @@
       <slot name="main-menu"></slot>
     </div>
 
-    <!-- 관리자 메뉴 (있을 경우) -->
-    <template v-if="$slots['admin-menu']">
+    <!-- 관리자 메뉴: role이 'ADMIN'일 때만 렌더링 -->
+    <template v-if="role === 'ADMIN' && $slots['admin-menu']">
       <hr />
       <div v-if="adminMenuTitle" class="admin-menu-title">
         {{ adminMenuTitle }}
@@ -73,6 +73,7 @@ const props = defineProps({
     type: String,
     default: '/src/assets/icons/icon_navigation.png',
   },
+  role: { type: String, default: 'MEMBER' },
 });
 
 defineEmits(['logout']);
