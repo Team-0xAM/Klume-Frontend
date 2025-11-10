@@ -86,7 +86,6 @@ const setActive = (label) => {
 }
 
 const handleLogout = () => {
-  console.log('로그아웃 클릭')
   // 로그아웃 로직 추가
 }
 </script>

@@ -89,7 +89,6 @@ const fetchOrganizations = async () => {
 
   try {
     const response = await getMyOrganizations()
-    console.log('[OrganizationView] 조직 목록:', response.data)
 
     // 백엔드 응답 데이터 형식에 맞게 매핑
     organizations.value = response.data.map(org => ({
@@ -99,8 +98,6 @@ const fetchOrganizations = async () => {
       logo: org.logo || org.logoUrl || '/assets/images/no_image.png'
     }))
   } catch (error) {
-    console.error('[OrganizationView] 조직 목록 조회 실패:', error)
-    console.log('[OrganizationView] 더미 데이터 사용')
     // API 실패 시 더미 데이터 사용
     organizations.value = dummyData
   } finally {

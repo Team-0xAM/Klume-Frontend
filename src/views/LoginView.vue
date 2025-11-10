@@ -74,7 +74,6 @@ const errorMessage = ref("")
 const isLoading = ref(false)
 
 const handleLogin = async (event) => {
-  console.log('[DEBUG] handleLogin 호출됨', new Date().toISOString(), 'event:', event)
 
   // 명시적으로 기본 동작 방지
   if (event) {
@@ -84,16 +83,13 @@ const handleLogin = async (event) => {
 
   // 이미 로딩 중이면 중복 실행 방지
   if (isLoading.value) {
-    console.log('[DEBUG] 이미 로딩 중 - 실행 중단')
     return
   }
 
   // 유효성 검사
   if (!email.value || !password.value) {
-    console.log('[DEBUG] 유효성 검사 실패')
     errorMessage.value = "이메일과 비밀번호를 입력해주세요."
     setTimeout(() => {
-      console.log('[DEBUG] 에러 메시지 지우기 전:', errorMessage.value)
     }, 100)
     return
   }
@@ -107,14 +103,12 @@ const handleLogin = async (event) => {
       password: password.value,
     })
 
-    console.log('[LoginView] 로그인 응답:', response.data)
 
     // 로그인 성공 시 토큰, 이메일, 프로필 이미지 저장
     if (response.data.accessToken) {
       setAccessToken(response.data.accessToken)
       setUserEmail(email.value)
 
-      console.log('[LoginView] 저장된 이메일:', email.value)
 
       // 프로필 이미지가 있으면 저장
       if (response.data.profileImage) {
@@ -123,20 +117,12 @@ const handleLogin = async (event) => {
           ? response.data.profileImage
           : `/${response.data.profileImage}`
         setProfileImage(imagePath)
-        console.log('[LoginView] 저장된 프로필 이미지:', imagePath)
       }
-
-      console.log('[LoginView] localStorage 확인:', {
-        token: localStorage.getItem('accessToken'),
-        email: localStorage.getItem('userEmail'),
-        image: localStorage.getItem('profileImage')
-      })
 
       // 로그인 성공 후 이동할 페이지 (새로고침하여 헤더 업데이트)
       window.location.href = '/home'
     }
   } catch (error) {
-    console.error('로그인 오류:', error)
 
     if (error.response) {
       // 서버 응답이 있는 경우

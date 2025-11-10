@@ -151,7 +151,6 @@ const sendVerificationCode = async () => {
     modalMessage.value = "이메일로 인증코드가 전송되었습니다."
     showModal.value = true
   } catch (error) {
-    console.error('인증코드 전송 오류:', error)
 
     if (error.response) {
       modalTitle.value = "전송 실패"
@@ -186,7 +185,6 @@ const verifyCodeHandler = async () => {
     clearInterval(timer)
     timerActive.value = false
   } catch (error) {
-    console.error('인증코드 검증 오류:', error)
 
     if (error.response) {
       modalTitle.value = "인증 실패"
@@ -235,7 +233,6 @@ const handleSignup = async () => {
     modalMessage.value = "Klume에 오신 걸 환영합니다!"
     showModal.value = true
   } catch (error) {
-    console.error('회원가입 오류:', error)
 
     if (error.response) {
       modalTitle.value = "회원가입 실패"

@@ -63,7 +63,6 @@ const clickCount = ref(0)
 
 const onClick = (label) => {
   clickCount.value++
-  console.log(`${label} 버튼 클릭됨 - 총 ${clickCount.value}번째 호출`)
   alert(`${label} 버튼 클릭됨 - 총 ${clickCount.value}번째 호출`)
 }
 </script>

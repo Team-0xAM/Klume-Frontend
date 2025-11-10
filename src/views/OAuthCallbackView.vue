@@ -22,7 +22,6 @@ onMounted(() => {
     const email = route.query.email
     const profileImage = route.query.profileImage
 
-    console.log('[OAuthCallbackView] 받은 데이터:', { token, email, profileImage })
 
     if (token) {
       // 토큰 저장
@@ -39,16 +38,13 @@ onMounted(() => {
         setProfileImage(profileImage)
       }
 
-      console.log('[OAuthCallbackView] 로그인 성공, /home으로 이동')
       // 홈 페이지로 리다이렉트
       router.push('/home')
     } else {
       // 토큰이 없으면 로그인 페이지로
-      console.error('[OAuthCallbackView] 토큰 없음, /auth/login으로 이동')
       router.push('/auth/login')
     }
   } catch (error) {
-    console.error('[OAuthCallbackView] 에러 발생:', error)
     router.push('/auth/login')
   }
 })
