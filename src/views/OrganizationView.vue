@@ -111,7 +111,7 @@ onMounted(() => {
 })
 
 const goJoinPage = () => {
-  router.push('/organization/join')
+  router.push('/organization/empty')
 }
 </script>
 

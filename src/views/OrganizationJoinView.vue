@@ -38,7 +38,7 @@ const goToCreate = () => {
 }
 
 const goToJoin = () => {
-  router.push('/organization/invite')
+  router.push('/organization/join')
 }
 </script>
 
