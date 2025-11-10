@@ -37,7 +37,11 @@ api.interceptors.response.use(
       // 401 Unauthorized - 로그인 필요
       if (status === 401) {
         localStorage.removeItem('accessToken')
-        window.location.href = '/auth/login'
+        // 현재 페이지가 로그인/회원가입 페이지가 아닐 때만 리다이렉트
+        const currentPath = window.location.pathname
+        if (!currentPath.startsWith('/auth/')) {
+          window.location.href = '/auth/login'
+        }
       }
     }
 

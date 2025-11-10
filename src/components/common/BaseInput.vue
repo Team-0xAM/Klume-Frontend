@@ -5,6 +5,7 @@
         :placeholder="placeholder"
         :style="{ height: height + 'px', fontSize: fontSize + 'px' }"
         v-model="model"
+        @keydown.enter.prevent
     />
     </div>
 </template>

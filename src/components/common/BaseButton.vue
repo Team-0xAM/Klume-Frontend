@@ -7,7 +7,7 @@
       fontWeight: depth === 'bold' ? 600 : 500,
       fontSize: fontSize + 'px',
     }"
-    @click.stop.prevent="handleClick"
+    @click="handleClick"
   >
     <slot>{{ label }}</slot>
   </button>

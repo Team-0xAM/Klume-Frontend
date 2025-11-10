@@ -20,13 +20,14 @@
 
         <!-- 로그인 버튼 -->
         <div class="button-field">
-          <BaseButton
-            :label="isLoading ? '로그인 중...' : '로그인'"
-            variant="primary"
+          <button
+            type="button"
             class="login-btn"
             :disabled="isLoading"
             @click="handleLogin"
-          />
+          >
+            {{ isLoading ? '로그인 중...' : '로그인' }}
+          </button>
         </div>
 
         <!-- 구글 로그인 -->
@@ -64,7 +65,6 @@ import { useRouter } from "vue-router"
 import { login } from "@/api/auth"
 import { setAccessToken, setUserEmail, setProfileImage } from "@/utils/auth"
 import BaseInput from "@/components/common/BaseInput.vue"
-import BaseButton from "@/components/common/BaseButton.vue"
 import GoogleButton from "@/components/common/GoogleButton.vue"
 
 const router = useRouter()
@@ -73,10 +73,28 @@ const password = ref("")
 const errorMessage = ref("")
 const isLoading = ref(false)
 
-const handleLogin = async () => {
+const handleLogin = async (event) => {
+  console.log('[DEBUG] handleLogin 호출됨', new Date().toISOString(), 'event:', event)
+
+  // 명시적으로 기본 동작 방지
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  // 이미 로딩 중이면 중복 실행 방지
+  if (isLoading.value) {
+    console.log('[DEBUG] 이미 로딩 중 - 실행 중단')
+    return
+  }
+
   // 유효성 검사
   if (!email.value || !password.value) {
+    console.log('[DEBUG] 유효성 검사 실패')
     errorMessage.value = "이메일과 비밀번호를 입력해주세요."
+    setTimeout(() => {
+      console.log('[DEBUG] 에러 메시지 지우기 전:', errorMessage.value)
+    }, 100)
     return
   }
 
@@ -214,8 +232,31 @@ const goSignup = () => {
   margin-bottom: 28px; /* 버튼 간 간격 */
 }
 
-/* 로그인 / 구글 버튼 공통 폭 */
-.login-btn,
+/* 로그인 버튼 */
+.login-btn {
+  width: 100%;
+  height: 46px;
+  border: none;
+  border-radius: 10px;
+  background-color: #0c1c54;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.login-btn:hover:not(:disabled) {
+  background-color: #15266b;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 구글 버튼 */
 .google-btn {
   width: 100%;
   height: 46px;

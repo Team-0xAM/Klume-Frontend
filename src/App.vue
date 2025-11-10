@@ -12,6 +12,7 @@ import BaseHeader from './components/common/BaseHeader.vue';
 <style>
 /* 전역 스타일 - 입력 요소를 제외한 모든 요소에서 텍스트 선택 방지 */
 * {
+  margin: 0px;
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
