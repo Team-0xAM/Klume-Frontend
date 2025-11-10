@@ -1,12 +1,12 @@
 <template>
   <div class="admin-page">
-    <Sidebar /> <!-- Pinia 전역 사이드바 -->
-    <MeetingRoomList :rooms="rooms" @add="onAddRoom" />
+    <Sidebar />
+    <MeetingRoomList :organization-id="organizationId" />
   </div>
 </template>
 
 <script setup>
-import MeetingRoomList from './MeetingRoomList.vue'
+import MeetingRoomList from '@/components/room/MeetingRoomList.vue';
 import { ref } from 'vue'
 
 const rooms = ref([
@@ -27,6 +27,8 @@ function onAddRoom() {
     availableTime: 0,
   })
 }
+
+const organizationId = ref(1)
 </script>
 
 <style scoped>

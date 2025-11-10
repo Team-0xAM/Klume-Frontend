@@ -37,21 +37,28 @@
 import { ref } from 'vue'
 const emit = defineEmits(['close', 'save'])
 
+// const form = ref({
+//   name: '',
+//   capacity: '',
+//   description: '',
+//   image: null,
+//   availableTime: 0,
+// })
+
 const form = ref({
   name: '',
   capacity: '',
   description: '',
-  image: null,
-  availableTime: 0,
 })
 
+const imageFile = ref(null)
+
 function handleFileUpload(e) {
-  const file = e.target.files[0]
-  form.value.image = file
+  imageFile.value = e.target.files[0]
 }
 
 function submitForm() {
-  emit('save', { ...form.value })
+  emit('save', { ...form.value }, imageFile.value)
 }
 </script>
 

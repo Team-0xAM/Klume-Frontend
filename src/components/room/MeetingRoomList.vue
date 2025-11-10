@@ -34,7 +34,7 @@
       </tbody>
     </table>
 
-    <!-- ✅ 모달 연결 -->
+    <!-- 모달 연결 -->
     <AddRoomModal
       v-if="showModal"
       @close="showModal = false"
@@ -44,25 +44,52 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import AddRoomModal from './AddRoomModal.vue' // ✅ 중괄호 제거
+import { ref, computed, onMounted } from 'vue'
+import AddRoomModal from './AddRoomModal.vue'
+import { getRooms, createRoom } from '@/api/room/roomApi.js'
 
 const props = defineProps({
-  rooms: {
-    type: Array,
-    required: true,
-    default: () => [],
-  },
+  organizationId: {
+    type: Number,
+    required: true
+  }
 })
 
-const emit = defineEmits(['update:rooms'])
 const showModal = ref(false)
-const roomCount = computed(() => props.rooms.length)
+const rooms = ref([])
 
-function addRoom(newRoom) {
-  const updatedRooms = [...props.rooms, { id: Date.now(), ...newRoom }]
-  emit('update:rooms', updatedRooms)
-  showModal.value = false
+const roomCount = computed(() => rooms.value.length)
+
+onMounted(fetchRooms)
+
+async function fetchRooms() {
+  try {
+    const { data } = await getRooms(props.organizationId)
+    rooms.value = data.map(room => ({
+      ...room,
+      // availableTime: '-' // TODO: 예약가능시간 연동 시 변경
+      availableTime: room.availableTimeCount
+    }))
+  } catch (error) {
+    console.error("회의실 목록 조회 실패:", error)
+  }
+}
+
+// 모달에서 넘어온 데이터 → 서버에 전달
+async function addRoom(roomData, imageFile) {
+  try {
+    const { data } = await createRoom(props.organizationId, roomData, imageFile)
+
+    rooms.value.push({
+      ...data,
+      availableTime: '-' 
+    })
+
+    showModal.value = false
+  } catch (error) {
+    console.error("회의실 등록 실패:", error)
+    alert("회의실 등록 실패")
+  }
 }
 </script>
 
