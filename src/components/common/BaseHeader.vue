@@ -69,6 +69,7 @@ const handleImageError = () => {
 // 로그아웃 처리
 const handleLogout = () => {
   logout()
+  checkAuthStatus()
   showLogoutModal.value = false
   router.push('/home')
 }
