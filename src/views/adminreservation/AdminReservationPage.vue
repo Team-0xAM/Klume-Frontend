@@ -3,43 +3,42 @@
     <!-- 제목 -->
     <div class="header">
       <h2>예약 관리</h2>
-      <p>사용자들의 예약 관리를 위한 공간입니다.</p>
+      <p>조직 회의실 예약 현황을 확인하고, 필요 시 조정할 수 있습니다.</p>
     </div>
 
-    <!-- 상단: 주차/날짜 네비 + 보기 전환 버튼 -->
+    <!-- 상단: 날짜 네비 + 보기 전환 -->
     <div class="top-bar">
       <div class="week-nav">
-        <button @click="prevDate">&lt;</button>
-        <span class="current-label">{{ currentLabel }}</span>
-        <button @click="nextDate">&gt;</button>
+        <button @click="prev">〈</button>
+        <span class="current-label">{{ displayLabel }}</span>
+        <button @click="next">〉</button>
       </div>
       <button class="toggle-btn" @click="toggleView">
         {{ viewMode === 'week' ? '일별로 보기 🗓️' : '주별로 보기 📅' }}
       </button>
     </div>
 
-    <!-- ✅ 주별 보기 -->
+    <!-- 주별 보기 -->
     <div v-if="viewMode === 'week'" class="week-view">
       <div class="legend">
-        <span class="dot green"></span> 예약 가능
-        <span class="dot red"></span> 예약 완료
-        <span class="dot gray"></span> 예약 오픈 예정
+        <span><span class="dot green"></span> 예약 가능</span>
+        <span><span class="dot red"></span> 예약 완료</span>
+        <span><span class="dot gray"></span> 예약 오픈 예정</span>
       </div>
-
       <div class="table-wrapper">
         <table class="reservation-table">
           <thead>
             <tr>
-              <th>공간명</th>
-              <th v-for="(day, i) in days" :key="i">{{ day.date }}({{ day.label }})</th>
+              <th>회의실</th>
+              <th v-for="d in weekDays" :key="d">{{ formatDay(d) }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(room, i) in rooms" :key="i">
-              <td>{{ room.name }}</td>
-              <td v-for="(day, j) in days" :key="j">
-                <div v-for="(slot, k) in room.schedule[day.label]" :key="k">
-                  <span :class="statusClass(slot.status)">{{ slot.time }}</span>
+            <tr v-for="room in weeklyData" :key="room.roomId">
+              <td>{{ room.roomName }}</td>
+              <td v-for="day in weekDays" :key="day">
+                <div v-for="slot in room.schedule[day]" :key="slot.id">
+                  <span :class="statusClass(slot.state)">{{ slot.time }}</span>
                 </div>
               </td>
             </tr>
@@ -48,48 +47,39 @@
       </div>
     </div>
 
-    <!-- ✅ 일별 보기 -->
+    <!-- 일별 보기 -->
     <div v-else class="day-view">
-      <h3 class="date-title">{{ currentLabel }} 이용 내역</h3>
+      <h3 class="date-title">{{ selectedDate }} 이용 내역</h3>
 
       <div class="section">
-        <h4>이용 예정인 회의실</h4>
-        <div
-          v-for="(item, i) in todayReservations.upcoming"
-          :key="'up-'+i"
-          class="card"
-        >
+        <h4>이용 예정</h4>
+        <div v-for="r in dayData.upcoming" :key="r.id" class="card">
           <div class="card-main">
             <div class="left">
-              <span class="room-name">{{ item.room }}</span>
-              <span class="tag upcoming">이용예정</span>
+              <span class="room-name">{{ r.room }}</span>
+              <span class="tag upcoming">이용 예정</span>
             </div>
             <div class="info">
-              <span class="time">🕒 {{ item.time }}</span>
-              <span class="user">👤 {{ item.user }}</span>
+              <span>🕒 {{ r.time }}</span>
+              <span>👤 {{ r.user }}</span>
             </div>
-            <button class="cancel-btn">취소</button>
+            <button class="cancel-btn" @click.stop="cancel(r.id)">취소</button>
           </div>
         </div>
       </div>
 
       <div class="section">
-        <h4>이용 종료된 회의실</h4>
-        <div
-          v-for="(item, i) in todayReservations.finished"
-          :key="'fin-'+i"
-          class="card finished"
-        >
+        <h4>이용 종료</h4>
+        <div v-for="r in dayData.finished" :key="r.id" class="card finished">
           <div class="card-main">
             <div class="left">
-              <span class="room-name">{{ item.room }}</span>
-              <span class="tag finished">이용종료</span>
+              <span class="room-name">{{ r.room }}</span>
+              <span class="tag finished">종료</span>
             </div>
             <div class="info">
-              <span class="time">🕒 {{ item.time }}</span>
-              <span class="user">👤 {{ item.user }}</span>
+              <span>🕒 {{ r.time }}</span>
+              <span>👤 {{ r.user }}</span>
             </div>
-            <button class="cancel-btn">완료</button>
           </div>
         </div>
       </div>
@@ -98,65 +88,125 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from "vue"
+import { useRoute } from "vue-router"
+// import { getWeeklyReservations, getDailyReservations, cancelReservation } from "@/api/reservationApi.js"
 
-const viewMode = ref('week') // 'week' or 'day'
-const currentLabel = ref('11월 3일')
-const days = ref([
-  { date: '3일', label: '월' },
-  { date: '4일', label: '화' },
-  { date: '5일', label: '수' },
-  { date: '6일', label: '목' },
-  { date: '7일', label: '금' },
-])
+const route = useRoute()
+const organizationId = Number(route.params.organizationId)
 
-const rooms = ref([
-  {
-    name: '3층 회의실',
-    schedule: {
-      월: [
-        { time: '13:00 - 14:00', status: 'done' },
-        { time: '18:00 - 20:00', status: 'done' },
-      ],
-      화: [{ time: '20:00 - 22:00', status: 'available' }],
-      수: [],
-      목: [],
-      금: [],
-    },
-  },
-  {
-    name: '4층 회의실',
-    schedule: {
-      월: [{ time: '13:00 - 14:00', status: 'available' }],
-      화: [],
-      수: [],
-      목: [],
-      금: [],
-    },
-  },
-])
+const viewMode = ref("week")
 
-const todayReservations = ref({
-  upcoming: [
-    { room: '3층 회의실', time: '18:00 - 20:00', user: '19기 정유진' },
-    { room: '4층 회의실', time: '20:00 - 22:00', user: '19기 정유진' },
-  ],
-  finished: [
-    { room: '5층 테이블1', time: '13:00 - 14:00', user: '19기 정유진' },
-  ],
+// 날짜
+const today = new Date()
+const selectedDate = ref(formatDate(today))
+const weekDays = ref(getWeekRange(today))
+
+const weeklyData = ref([])
+const dayData = ref({ upcoming: [], finished: [] })
+
+/* 더미데이터용 회의실 이름 */
+const roomNames = ["3층 회의실", "4층 회의실", "5층 회의실"]
+
+/* 날짜 + 시간 더미 */
+const sampleTimes = ["09:00 - 10:00", "13:00 - 14:00", "18:00 - 20:00"]
+const users = ["19기 정유진", "18기 김민수", "20기 이서연"]
+
+// 날짜 포맷 함수
+function formatDate(date) {
+  return date.toISOString().slice(0, 10)
+}
+function getWeekRange(baseDate) {
+  const start = new Date(baseDate)
+  start.setDate(start.getDate() - start.getDay() + 1)
+  return [...Array(7)].map((_, i) => {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    return formatDate(d)
+  })
+}
+function formatDay(d) {
+  const day = ["일","월","화","수","목","금","토"][new Date(d).getDay()]
+  return `${d.slice(5)}(${day})`
+}
+
+// 더미 데이터 생성 함수
+function generateWeeklyDummy() {
+  weeklyData.value = roomNames.map((name, roomIndex) => ({
+    roomId: roomIndex + 1,
+    roomName: name,
+    schedule: Object.fromEntries(
+      weekDays.value.map((day) => [
+        day,
+        sampleTimes.map((t, idx) => ({
+          id: `${roomIndex}-${day}-${idx}`,
+          time: t,
+          state: idx === 0 ? "done" : idx === 1 ? "pending" : "available"
+        }))
+      ])
+    )
+  }))
+}
+
+function generateDailyDummy() {
+  dayData.value = {
+    upcoming: [
+      { id: 1, room: "3층 회의실", time: "18:00 - 20:00", user: users[0] },
+      { id: 2, room: "4층 회의실", time: "20:00 - 21:00", user: users[1] },
+    ],
+    finished: [
+      { id: 3, room: "5층 회의실", time: "09:00 - 10:00", user: users[2] },
+    ]
+  }
+}
+
+// 보기 전환
+function toggleView() {
+  viewMode.value = viewMode.value === "week" ? "day" : "week"
+  if (viewMode.value === "day") generateDailyDummy()
+}
+
+// 날짜 이동
+function prev() {
+  const target = new Date(selectedDate.value)
+  target.setDate(target.getDate() - (viewMode.value === "week" ? 7 : 1))
+  selectedDate.value = formatDate(target)
+  weekDays.value = getWeekRange(target)
+  if (viewMode.value === "week") generateWeeklyDummy()
+  else generateDailyDummy()
+}
+
+function next() {
+  const target = new Date(selectedDate.value)
+  target.setDate(target.getDate() + (viewMode.value === "week" ? 7 : 1))
+  selectedDate.value = formatDate(target)
+  weekDays.value = getWeekRange(target)
+  if (viewMode.value === "week") generateWeeklyDummy()
+  else generateDailyDummy()
+}
+
+// 관리자 예약 취소 (더미)
+function cancel(id) {
+  alert("관리자 취소 처리 (더미): " + id)
+  dayData.value.upcoming = dayData.value.upcoming.filter(i => i.id !== id)
+}
+
+  const displayLabel = computed(() => {
+    return viewMode.value === "week"
+      ? `${weekDays.value[0]} ~ ${weekDays.value[6]}`
+      : selectedDate.value
+  })
+
+onMounted(() => {
+  generateWeeklyDummy()
 })
 
-function toggleView() {
-  viewMode.value = viewMode.value === 'week' ? 'day' : 'week'
-}
-function prevDate() {}
-function nextDate() {}
-function statusClass(status) {
+function statusClass(state) {
   return {
-    available: 'status available',
-    done: 'status done',
-    pending: 'status pending',
-  }[status]
+    available: "status available",
+    done: "status done",
+    pending: "status pending",
+  }[state]
 }
 </script>
 
@@ -381,4 +431,31 @@ function statusClass(status) {
     font-size: 14px;
   }
 }
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 14px;
+  color: #555;
+  margin: 8px 0 14px;
+}
+
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.green { background-color: #1bb978; } /* 예약 가능 */
+.red { background-color: #e44b4b; }   /* 예약 완료 */
+.gray { background-color: #aaaaaa; } /* 예약 예정 */
+
 </style>
