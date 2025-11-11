@@ -24,7 +24,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(room, index) in rooms" :key="room.id">
+        <tr 
+          v-for="(room, index) in rooms" 
+          :key="room.id"
+          class="clickable-row"
+          @click="goToDetail(room.id)"
+        >
           <td>{{ index + 1 }}</td>
           <td>{{ room.name }}</td>
           <td>{{ room.description || '-' }}</td>
@@ -45,6 +50,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import AddRoomModal from './AddRoomModal.vue'
 import { getRooms, createRoom } from '@/api/room/roomApi.js'
 
@@ -54,6 +60,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const router = useRouter()
 
 const showModal = ref(false)
 const rooms = ref([])
@@ -73,6 +81,10 @@ async function fetchRooms() {
   } catch (error) {
     console.error("회의실 목록 조회 실패:", error)
   }
+}
+
+function goToDetail(roomId) {
+  router.push(`/organization/${props.organizationId}/admin/rooms/${roomId}`)
 }
 
 // 모달에서 넘어온 데이터 → 서버에 전달

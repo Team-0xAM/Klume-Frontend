@@ -1,15 +1,15 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-export const organizationRole = ref(null)
+// export const organizationRole = ref(null)
 export const organizationName = ref('')
 export const organizationId = ref(null)
 export const userNickname = ref('')
-
+export const organizationRole = ref("ADMIN")
 export async function fetchOrganizationInfo(orgId) {
     try {
         const res = await axios.get(`/organizations/${orgId}/role`, {
-        params: { memberId: 1 }, // TODO: 실제 로그인 사용자 ID
+        params: { memberId: 7 }, // TODO: 실제 로그인 사용자 ID
     })
     organizationRole.value = res.data.role // 'ADMIN' or 'MEMBER'
 

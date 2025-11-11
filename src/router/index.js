@@ -11,7 +11,6 @@ import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 
-import HomeView from '@/views/HomeView.vue';
 import CommonTestView from "@/views/test/CommonTestView.vue";
 import SidebarTestView from '@/views/test/SidebarTestView.vue'
 import ModalTestView from "@/views/test/ModalTestView.vue";
@@ -22,7 +21,6 @@ import AdminReservationPage from '@/views/adminreservation/AdminReservationPage.
 import userhome from '@/views/test/userhome.vue';
 import ReservationPage from '@/views/reservation/ReservationPage.vue';
 import RoomDetail from '@/views/reservation/RoomDetail.vue';
-import OrganizationDashboard from '@/views/dashboard/OrganizationDashboard.vue';
 import AdminRoomDetail from '@/views/room/AdminRoomDetail.vue';
 
 // --- 조직 관련 레이아웃 및 페이지 ---
@@ -35,75 +33,13 @@ import ForbiddenView from "@/views/error/ForbiddenView.vue"; // 🚫 403 페이�
 // --- routes ---
 const routes = [
 
-  { path: "/", component: HomeView },
   { path: "/home", component: HomeView },
+  { path: "/", redirect: "/home" },
   { path: "/auth/login", component: LoginView, meta: { requiresGuest: true } },
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
   { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinView, meta: { requiresAuth: true } },
-
-  // ✅ 조직 내부 페이지
-  {
-    path: "/organization/:organizationId",
-    component: OrganizationLayout,
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: "",
-        name: "OrganizationDashboard",
-        component: OrganizationDashboard,
-      },
-      {
-        path: "reserve",
-        name: "ReservationPage",
-        component: {
-          template: `
-            <div style="padding:40px">
-              <h1>회의실 예약 페이지 (ReservationView.vue 예정)</h1>
-              <p>추후 실제 예약 페이지로 대체될 예정입니다.</p>
-            </div>
-          `,
-        },
-      },
-      {
-        path: "my",
-        name: "MyReservationPage",
-        component: {
-          template: `
-            <div style="padding:40px">
-              <h1>내 예약 보기 페이지 (MyReservationView.vue 예정)</h1>
-            </div>
-          `,
-        },
-      },
-      {
-        path: "notice",
-        name: "NoticePage",
-        component: {
-          template: `
-            <div style="padding:40px">
-              <h1>공지사항 페이지 (NoticeView.vue 예정)</h1>
-            </div>
-          `,
-        },
-      },
-
-      // 👑 관리자 전용
-      {
-        path: "admin/reservations",
-        name: "AdminReservationManage",
-        component: ReservationManage,
-        meta: { requiresAdmin: true },
-      },
-      {
-        path: "admin/rooms",
-        name: "AdminRoomManage",
-        component: RoomManage,
-        meta: { requiresAdmin: true },
-      },
-    ],
-  },
 
   // 🚫 403 접근 권한 없음
   {
@@ -119,9 +55,13 @@ const routes = [
     {path: '/test/orgcard', component: OrganizationListTestView},
 
     /* 관리자메뉴 회의실 관리페이지 */
-    {path: '/roomlist', component: MeetingRoomList},
     {path: '/adminroomlist', component: AdminRoomPage},
-    {path: '/adminroomdetail', component: AdminRoomDetail},
+    {
+      path: "/organization/:organizationId/admin/rooms/:roomId",
+      name: "AdminRoomDetail",
+      component: AdminRoomDetail,
+      meta: { requiresAdmin: true },
+    },
 
     /* 피그마용 삭제예정 */
     {path: '/adminreservation', component: AdminReservationPage},
@@ -131,7 +71,7 @@ const routes = [
     { path: '/reservation/:roomId', component: RoomDetail },
 
     { path: '/dashboard', component: OrganizationDashboard },
-    
+
 ];
 
 // --- router setup ---
