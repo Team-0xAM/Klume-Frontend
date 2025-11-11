@@ -89,7 +89,7 @@ onMounted(() => {
 })
 
 const goJoinPage = () => {
-  router.push('/organization/empty')
+  router.push('/organization/new')
 }
 </script>
 

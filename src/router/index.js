@@ -26,7 +26,7 @@ const routes = [
     {path: '/auth/signup', component: SignupView, meta: { requiresGuest: true }},
     {path: '/oauth/callback', component: OAuthCallbackView},
     {path: '/organization', component: OrganizationView},
-    {path: '/organization/empty', component: OrganizationJoinView},
+    {path: '/organization/new', component: OrganizationJoinView},
     {path: '/organization/create', component: OrganizationCreateView},
     {path: '/organization/join', component: OrganizationJoinWithCodeView},
 
