@@ -226,14 +226,14 @@ onMounted(fetchNotices)
   font-size: 15px;
 }
 
-/* 테이블 헤더 스타일 */
+/* 테이블 헤더 */
 .notice-table th {
   background-color: #f1f3f5;
   font-weight: 600;
   color: #333;
 }
 
-/* 각 열 비율 조정 (제목은 넓게, 중앙 정렬 유지) */
+/* 각 열 비율 */
 .notice-table th:nth-child(1),
 .notice-table td:nth-child(1) {
   width: 10%;
@@ -243,6 +243,9 @@ onMounted(fetchNotices)
 .notice-table td:nth-child(2) {
   width: 40%;
   text-align: center;
+  white-space: nowrap;           /* 줄바꿈 금지 */
+  overflow: hidden;              /* 넘친 부분 숨김 */
+  text-overflow: ellipsis;       /* 말줄임(...) 처리 */
 }
 
 .notice-table th:nth-child(3),
@@ -258,6 +261,7 @@ onMounted(fetchNotices)
 .notice-table th:nth-child(5),
 .notice-table td:nth-child(5) {
   width: 10%;
+  white-space: nowrap; /* 버튼 줄바꿈 방지 */
 }
 
 /* ---------- 버튼 ---------- */
@@ -270,13 +274,14 @@ onMounted(fetchNotices)
   cursor: pointer;
   font-size: 14px;
   transition: all 0.15s ease;
+  display: inline-block;
 }
 
 .btn-small:hover {
   background: #dee2e6;
 }
 
-/* 삭제 버튼 (톤다운된 부드러운 빨강) */
+/* 삭제 버튼 (톤 다운된 빨강) */
 .btn-small.danger {
   background: #ff6b6b;
   color: #fff;
@@ -284,28 +289,6 @@ onMounted(fetchNotices)
 
 .btn-small.danger:hover {
   background: #fa5252;
-}
-
-/* ---------- 반응형 ---------- */
-@media (max-width: 900px) {
-  .notice-admin-container {
-    padding: 20px;
-  }
-
-  .page-header h2 {
-    font-size: 20px;
-  }
-
-  .btn-primary {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .notice-table th,
-  .notice-table td {
-    font-size: 13px;
-    padding: 10px 12px;
-  }
 }
 
 </style>
