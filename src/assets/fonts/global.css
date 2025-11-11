@@ -1,0 +1,37 @@
+* {
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 기본 바디 스타일 */
+body {
+  margin: 0;
+  padding: 0;
+  color: #1a1a1a;
+  line-height: 1.45;
+  background: #fafafa;
+}
+
+/* 모든 input / textarea / select 통일 */
+input,
+textarea,
+select {
+  font-family: inherit;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #002b87;
+}
+
+/* 공통 버튼 스타일 */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}

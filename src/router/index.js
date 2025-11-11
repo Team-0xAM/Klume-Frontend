@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+
 import { isAuthenticated } from "@/utils/auth";
 import { organizationRole, fetchOrganizationInfo } from "@/composables/useOrganization.js";
 
@@ -10,6 +11,20 @@ import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 
+import HomeView from '@/views/HomeView.vue';
+import CommonTestView from "@/views/test/CommonTestView.vue";
+import SidebarTestView from '@/views/test/SidebarTestView.vue'
+import ModalTestView from "@/views/test/ModalTestView.vue";
+import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue";
+import MeetingRoomList from '@/components/room/MeetingRoomList.vue';
+import AdminRoomPage from '@/views/room/AdminRoomPage.vue';
+import AdminReservationPage from '@/views/adminreservation/AdminReservationPage.vue';
+import userhome from '@/views/test/userhome.vue';
+import ReservationPage from '@/views/reservation/ReservationPage.vue';
+import RoomDetail from '@/views/reservation/RoomDetail.vue';
+import OrganizationDashboard from '@/views/dashboard/OrganizationDashboard.vue';
+import AdminRoomDetail from '@/views/room/AdminRoomDetail.vue';
+
 // --- 조직 관련 레이아웃 및 페이지 ---
 import OrganizationLayout from "@/components/layout/OrganizationLayout.vue";
 import OrganizationDashboard from "@/views/organization/OrganizationDashboard.vue";
@@ -19,6 +34,7 @@ import ForbiddenView from "@/views/error/ForbiddenView.vue"; // 🚫 403 페이�
 
 // --- routes ---
 const routes = [
+
   { path: "/", component: HomeView },
   { path: "/home", component: HomeView },
   { path: "/auth/login", component: LoginView, meta: { requiresGuest: true } },
@@ -95,6 +111,27 @@ const routes = [
     name: "Forbidden",
     component: ForbiddenView,
   },
+
+    {path: '/', component: HomeView},
+    {path: '/test/common', component: CommonTestView},
+    {path: '/test/sidebar', component: SidebarTestView},
+    {path: '/test/modar', component: ModalTestView},
+    {path: '/test/orgcard', component: OrganizationListTestView},
+
+    /* 관리자메뉴 회의실 관리페이지 */
+    {path: '/roomlist', component: MeetingRoomList},
+    {path: '/adminroomlist', component: AdminRoomPage},
+    {path: '/adminroomdetail', component: AdminRoomDetail},
+
+    /* 피그마용 삭제예정 */
+    {path: '/adminreservation', component: AdminReservationPage},
+    {path: '/userhome', component: userhome},
+
+    { path: '/reservation', component: ReservationPage },
+    { path: '/reservation/:roomId', component: RoomDetail },
+
+    { path: '/dashboard', component: OrganizationDashboard },
+    
 ];
 
 // --- router setup ---
