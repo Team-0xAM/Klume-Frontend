@@ -253,7 +253,7 @@ input {
 .radio-group label {
   display: flex;
   align-items: center;
-  gap: 8px; /* 버튼 ↔ 글자 간격 */
+  gap: 8px; 
   cursor: pointer;
   line-height: 1.4;
 }
@@ -324,7 +324,7 @@ input {
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 30px;
+  margin-top: 32px;
   gap: 10px;
 }
 
