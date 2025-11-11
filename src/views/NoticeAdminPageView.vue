@@ -24,7 +24,7 @@
         <tr v-for="notice in sortedNotices" :key="notice.id">
           <td>{{ notice.id }}</td>
           <td>{{ notice.title }}</td>
-          <td>{{ notice.authorName || '매니저' }}</td>
+          <td>{{ notice.authorName ? notice.authorName : '(닉네임 없음)' }}</td>
           <td>{{ formatDate(notice.createdAt) }}</td>
           <td>
             <button class="btn-small" @click="openModal(notice)">수정</button>
@@ -64,15 +64,19 @@ const fetchNotices = async () => {
     // 백엔드에서 List를 직접 반환하므로 res.data 사용
     const noticesData = Array.isArray(res.data) ? res.data : res.data.data || []
     // noticeId를 id로 매핑
-    notices.value = noticesData.map(notice => ({
-      id: notice.noticeId,
-      title: notice.title,
-      content: notice.content,
-      createdAt: notice.createdAt,
-      updatedAt: notice.updatedAt,
-      memberId: notice.memberId,
-      authorName: notice.authorName || null
-    }))
+    notices.value = noticesData.map(notice => {
+      console.log('개별 공지사항:', notice)
+      console.log('authorName 값:', notice.authorName)
+      return {
+        id: notice.noticeId,
+        title: notice.title,
+        content: notice.content,
+        createdAt: notice.createdAt,
+        updatedAt: notice.updatedAt,
+        memberId: notice.memberId,
+        authorName: notice.authorName || null
+      }
+    })
     console.log('변환된 공지사항 목록:', notices.value)
   } catch (e) {
     console.error('공지사항 목록 조회 실패:', e)
@@ -152,47 +156,156 @@ onMounted(fetchNotices)
   padding: 40px;
   background-color: #f8f9fb;
   min-height: 100vh;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  color: #222;
 }
+
+/* ---------- 상단 헤더 ---------- */
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
+
+.page-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1b3b8b;
+  margin-bottom: 6px;
+}
+
+.page-header p {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ---------- 테이블 상단 (총 개수 + 버튼) ---------- */
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
+
+.table-header span {
+  font-size: 15px;
+  color: #555;
+}
+
+.btn-primary {
+  background-color: #1b3b8b;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #162f73;
+}
+
+/* ---------- 테이블 ---------- */
 .notice-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  table-layout: fixed;
 }
+
 .notice-table th,
 .notice-table td {
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-bottom: 1px solid #eee;
   text-align: center;
+  word-wrap: break-word;
+  font-size: 15px;
 }
-.btn-primary {
-  background-color: #1b3b8b;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
+
+/* 테이블 헤더 스타일 */
+.notice-table th {
+  background-color: #f1f3f5;
+  font-weight: 600;
+  color: #333;
 }
+
+/* 각 열 비율 조정 (제목은 넓게, 중앙 정렬 유지) */
+.notice-table th:nth-child(1),
+.notice-table td:nth-child(1) {
+  width: 10%;
+}
+
+.notice-table th:nth-child(2),
+.notice-table td:nth-child(2) {
+  width: 40%;
+  text-align: center;
+}
+
+.notice-table th:nth-child(3),
+.notice-table td:nth-child(3) {
+  width: 20%;
+}
+
+.notice-table th:nth-child(4),
+.notice-table td:nth-child(4) {
+  width: 20%;
+}
+
+.notice-table th:nth-child(5),
+.notice-table td:nth-child(5) {
+  width: 10%;
+}
+
+/* ---------- 버튼 ---------- */
 .btn-small {
   background: #e9ecef;
   border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
+  border-radius: 6px;
+  padding: 6px 12px;
   margin: 0 3px;
   cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
 }
+
+.btn-small:hover {
+  background: #dee2e6;
+}
+
+/* 삭제 버튼 (톤다운된 부드러운 빨강) */
 .btn-small.danger {
-  background: #ff4b4b;
-  color: white;
+  background: #ff6b6b;
+  color: #fff;
 }
+
+.btn-small.danger:hover {
+  background: #fa5252;
+}
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 900px) {
+  .notice-admin-container {
+    padding: 20px;
+  }
+
+  .page-header h2 {
+    font-size: 20px;
+  }
+
+  .btn-primary {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .notice-table th,
+  .notice-table td {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
+
 </style>
