@@ -59,9 +59,11 @@ import GoogleButton from '@/components/common/GoogleButton.vue'
 
 const email = ref('')
 const password = ref('')
+const clickCount = ref(0)
 
 const onClick = (label) => {
-  alert(`${label} 버튼 클릭됨`)
+  clickCount.value++
+  alert(`${label} 버튼 클릭됨 - 총 ${clickCount.value}번째 호출`)
 }
 </script>
 

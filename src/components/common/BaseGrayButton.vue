@@ -1,12 +1,13 @@
 <template>
   <button
+    type="button"
     class="gray-button"
     :style="{
       height: height + 'px',
       fontWeight: depth === 'bold' ? 600 : 500,
       fontSize: fontSize + 'px',
     }"
-    @click="$emit('click')"
+    @click.stop.prevent="handleClick"
   >
     <slot>{{ label }}</slot>
   </button>
@@ -19,6 +20,12 @@ defineProps({
   fontSize: { type: Number, default: 16 },
   depth: { type: String, default: 'normal' },
 });
+
+const emit = defineEmits(['click']);
+
+const handleClick = (event) => {
+  emit('click', event);
+};
 </script>
 
 <style scoped>

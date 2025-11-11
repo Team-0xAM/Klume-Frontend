@@ -5,12 +5,13 @@
         :placeholder="placeholder"
         :style="{ height: height + 'px', fontSize: fontSize + 'px' }"
         v-model="model"
+        @keydown.enter.prevent
     />
     </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     modelValue: String,
@@ -21,9 +22,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
-const model = ref(props.modelValue);
 
-watch(model, (val) => emit('update:modelValue', val));
+const model = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+});
 </script>
 
 <style scoped>
