@@ -3,7 +3,13 @@
     <!-- 프로필 섹션 -->
     <div class="profile-section">
       <div class="profile-image" :style="profileImageStyle">
-        <img v-if="profileImage" :src="profileImage" alt="프로필" />
+        <img
+          v-if="profileImage && !imageError"
+          :src="profileImage"
+          alt="프로필"
+          @error="handleImageError"
+        />
+        <span v-else class="profile-initial">{{ getInitial(organizationName) }}</span>
       </div>
       <div class="profile-name">{{ organizationName }}</div>
     </div>
@@ -43,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
   // 프로필 관련
@@ -77,8 +83,21 @@ const props = defineProps({
 
 defineEmits(['logout']);
 
+const imageError = ref(false);
+
+// 이미지 로딩 에러 처리
+const handleImageError = () => {
+  imageError.value = true;
+};
+
+// 조직명 또는 이름에서 첫 글자 추출
+const getInitial = (name) => {
+  if (!name) return '?';
+  return name.charAt(0).toUpperCase();
+};
+
 const profileImageStyle = computed(() => {
-  if (props.profileImage) {
+  if (props.profileImage && !imageError.value) {
     return {
       backgroundImage: `url(${props.profileImage})`,
       backgroundSize: 'cover',
@@ -87,6 +106,9 @@ const profileImageStyle = computed(() => {
   }
   return {
     backgroundColor: '#d9d9d9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   };
 });
 </script>
@@ -121,6 +143,13 @@ const profileImageStyle = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.profile-initial {
+  color: #0c1c54;
+  font-size: 28px;
+  font-weight: 700;
+  user-select: none;
 }
 
 .profile-name {
