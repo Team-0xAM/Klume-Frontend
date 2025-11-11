@@ -3,15 +3,67 @@
     <!-- 사이드바 (왼쪽) -->
     <SideBar
       :organization-name="organizationName"
+      :profile-image="organizationImage"
       :user-name="userName"
+      :role="organizationRole"
       admin-menu-title="관리자메뉴"
     >
+      <!-- 메인 메뉴 -->
       <template #main-menu>
-        <!-- 일반 메뉴 슬롯 -->
+        <NavButton
+          label="홈"
+          icon="icon_home.png"
+          :to="`/organization/${organizationId}`"
+        />
+        <NavButton
+          label="예약하기"
+          icon="icon_clock.png"
+          :to="`/organization/${organizationId}/reservation`"
+        />
+        <NavButton
+          label="내 예약 보기"
+          icon="icon_check.png"
+          :to="`/organization/${organizationId}/my-reservation`"
+        />
+        <NavButton
+          label="공지사항"
+          icon="icon_bookmark.png"
+          :to="`/organization/${organizationId}/notice`"
+        />
+        <NavButton
+          label="조직 대시보드로 가기"
+          icon="icon_grid.png"
+          :to="'/organization'"
+        />
       </template>
 
+      <!-- 관리자 메뉴: ADMIN만 노출 -->
       <template #admin-menu>
-        <!-- 관리자 메뉴 슬롯 -->
+        <NavButton
+          label="예약 관리"
+          icon="icon_calendar.png"
+          :to="`/organization/${organizationId}/admin/reservation`"
+        />
+        <NavButton
+          label="회의실 관리"
+          icon="icon_navigation.png"
+          :to="`/organization/${organizationId}/admin/room`"
+        />
+        <NavButton
+          label="조직 관리"
+          icon="icon_users.png"
+          :to="`/organization/${organizationId}/admin/manage`"
+        />
+        <NavButton
+          label="공지사항 관리"
+          icon="icon_bookmark.png"
+          :to="`/organization/${organizationId}/notices`"
+        />
+        <NavButton
+          label="채팅 문의"
+          icon="icon_circle.png"
+          :to="`/organizations/${organizationId}/chat`"
+        />
       </template>
     </SideBar>
 
@@ -122,10 +174,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import SideBar from '../components/common/SideBar.vue'
+import NavButton from '../components/common/NavButton.vue'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
+import { fetchOrganizationInfo, organizationRole, organizationName, organizationImage, userNickname, organizationId as orgId } from '@/composables/useOrganization.js'
 
 const route = useRoute()
 
@@ -135,9 +189,8 @@ const organizationId = ref(parseInt(route.params.organizationId) || 1)
 // 사용자 정보
 const currentUserEmail = ref(localStorage.getItem('email') || '')
 const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
-const userName = ref(currentUserEmail.value)
-const organizationName = ref('조직명') // 하드코딩(임시)
-const isAdmin = ref(false) // 하드코딩(임시) 관리자 여부 - API에서 가져와야 함
+const userName = userNickname // useOrganization에서 가져옴
+const isAdmin = computed(() => organizationRole.value === 'ADMIN') // 역할에서 관리자 여부 확인
 
 // 채팅방 목록
 const chatRooms = ref([])
@@ -244,7 +297,10 @@ const handleUnassign = async (roomId) => {
 }
 
 // 컴포넌트 마운트 시 목록 로드
-onMounted(() => {
+onMounted(async () => {
+  // 조직 정보 로드
+  await fetchOrganizationInfo(organizationId.value)
+  // 채팅방 목록 로드
   loadChatRooms()
 })
 </script>
