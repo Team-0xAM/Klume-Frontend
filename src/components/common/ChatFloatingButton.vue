@@ -42,8 +42,8 @@ const displayCount = computed(() => {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #0c1c54;
-  color: white;
+  background-color: #F5D042;
+  color: #0c1c54;
   border: none;
   cursor: pointer;
   display: flex;
