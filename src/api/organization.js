@@ -2,7 +2,7 @@ import apiClient from './axios'
 
 // 사용자가 속한 조직 목록 조회
 export const getMyOrganizations = () => {
-  return apiClient.get('/api/organizations/my')
+  return apiClient.get('/my/organizations')
 }
 
 // 특정 조직 상세 조회

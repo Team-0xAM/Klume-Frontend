@@ -5,6 +5,14 @@ import { createChatSocket, sendMessage as publishMessage } from './chat/chatSock
 // ==================== REST API ====================
 
 /**
+ * 내 정보 조회 (조직 목록 포함)
+ * @returns {Promise} 사용자 정보 및 조직 목록
+ */
+export const getUserInfo = () => {
+  return api.get('/members/me')
+}
+
+/**
  * 채팅방 목록 조회 (관리자용)
  * @param {number} organizationId - 조직 ID
  * @returns {Promise} 채팅방 목록
@@ -14,7 +22,26 @@ export const getChatRooms = (organizationId) => {
 }
 
 /**
- * 채팅방 생성 (일반 회원용)
+ * 내 채팅방 조회 또는 생성 (일반 회원용)
+ * @param {number} organizationId - 조직 ID
+ * @param {string} content - 첫 메시지 내용
+ * @returns {Promise} 채팅방 정보
+ */
+export const getOrCreateMyChatRoom = (organizationId, content) => {
+  return api.post(`/my-chats/organizations/${organizationId}`, { content })
+}
+
+/**
+ * 내 채팅 메시지 조회 (일반 회원용)
+ * @param {number} roomId - 채팅방 ID
+ * @returns {Promise} 채팅 메시지 목록
+ */
+export const getMyChatMessages = (roomId) => {
+  return api.get(`/my-chats/${roomId}/messages`)
+}
+
+/**
+ * 채팅방 생성 (일반 회원용) - DEPRECATED: getOrCreateMyChatRoom 사용 권장
  * @param {number} organizationId - 조직 ID
  * @param {object} data - 채팅방 생성 데이터
  * @returns {Promise} 생성된 채팅방 정보

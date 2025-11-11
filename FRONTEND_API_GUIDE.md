@@ -163,10 +163,15 @@ src/main/java/com/oxam/klume/
 │
 ├── chat/                            # 채팅 도메인 (MongoDB)
 │   ├── controller/
-│   │   ├── ChatRoomController.java     # REST API
-│   │   └── ChatController.java         # WebSocket
+│   │   ├── MemberChatController.java   # 회원용 REST API
+│   │   ├── AdminChatController.java    # 관리자용 REST API
+│   │   └── ChatController.java         # WebSocket (관리자/회원 공용)
 │   ├── service/
-│   │   ├── ChatService.java
+│   │   ├── MemberChatService.java
+│   │   ├── MemberChatServiceImpl.java
+│   │   ├── AdminChatService.java
+│   │   ├── AdminChatServiceImpl.java
+│   │   ├── ChatService.java            # 공통 서비스
 │   │   ├── ChatServiceImpl.java
 │   │   └── SequenceGeneratorService.java  # MongoDB 자동증가 ID
 │   ├── repository/
@@ -519,9 +524,9 @@ Authorization: Bearer {JWT_TOKEN}
 
 ## 4. Chat (채팅)
 
-### 4.1 채팅방 생성 (일반 회원)
+### 4.1 채팅방 조회 또는 생성 (일반 회원)
 ```http
-POST /organizations/{organizationId}/chat-rooms
+POST /my-chats/organizations/{organizationId}
 Authorization: Bearer {JWT_TOKEN}
 Content-Type: application/json
 
@@ -540,13 +545,13 @@ Content-Type: application/json
   "assignedToId": null,
   "assignedToName": null,
   "createdAt": "2024-01-15T10:30:00",
-  "firstMessage": "문의 드립니다. 회의실 예약은 어떻게 하나요?"
+  "lastMessageAt": "2024-01-15T10:30:00"
 }
 ```
 
 **참고:**
 - 일반 회원이 문의를 시작할 때 사용
-- 생성 시 첫 메시지를 함께 전송
+- 채팅방이 있으면 조회, 없으면 첫 메시지와 함께 생성
 - `assignedToId`는 null (아직 담당 관리자 없음)
 - 한 회원은 조직당 하나의 채팅방만 생성 가능 (기존 채팅방이 있으면 재사용)
 
@@ -649,9 +654,9 @@ Authorization: Bearer {JWT_TOKEN}
 - 현재 담당자만 해제 가능
 - 다른 관리자는 해제 불가 (400 에러)
 
-### 4.5 채팅 메시지 조회
+### 4.5 채팅 메시지 조회 (회원용)
 ```http
-GET /organizations/{organizationId}/chat-rooms/{roomId}/messages
+GET /my-chats/{roomId}/messages
 Authorization: Bearer {JWT_TOKEN}
 ```
 
@@ -689,13 +694,32 @@ Authorization: Bearer {JWT_TOKEN}
 - `createdAt` 기준 오름차순 (오래된 메시지부터)
 
 **권한:**
-- 채팅방 생성자 (일반 회원)
-- 조직의 관리자 (모든 채팅방 조회 가능)
-- 그 외에는 403 에러
+- 자신의 채팅방만 조회 가능
+- 다른 회원의 채팅방 조회 시 403 에러
 
-**페이지네이션:**
-- 현재는 전체 메시지 반환
-- 향후 `offset`, `limit` 파라미터 추가 예정
+### 4.6 채팅 메시지 조회 (관리자용)
+```http
+GET /organizations/{organizationId}/chat-rooms/{roomId}/messages
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**응답:**
+```json
+[
+  {
+    "id": "507f1f77bcf86cd799439011",
+    "roomId": 1,
+    "senderId": "user@example.com",
+    "admin": false,
+    "content": "문의 드립니다. 회의실 예약은 어떻게 하나요?",
+    "createdAt": "2024-01-15T10:30:00"
+  }
+]
+```
+
+**권한:**
+- 조직의 관리자만 조회 가능
+- 일반 회원은 403 에러
 
 ---
 
@@ -762,7 +786,7 @@ function sendMessage(roomId, content, isAdmin) {
   const message = {
     roomId: roomId,
     content: content,
-    isAdmin: isAdmin  // 관리자 여부
+    admin: isAdmin  // 관리자 여부
   };
 
   stompClient.publish({
@@ -865,7 +889,7 @@ function ChatRoom({ roomId, jwtToken, isAdmin }) {
         body: JSON.stringify({
           roomId: roomId,
           content: inputMessage,
-          isAdmin: isAdmin
+          admin: isAdmin
         })
       });
       setInputMessage('');
@@ -902,11 +926,11 @@ function ChatRoom({ roomId, jwtToken, isAdmin }) {
 
 **백엔드에서 검증하는 규칙:**
 
-1. **일반 회원 (isAdmin: false)**
+1. **일반 회원 (admin: false)**
    - 자신이 생성한 채팅방에만 메시지 전송 가능
    - 다른 회원의 채팅방에는 전송 불가
 
-2. **관리자 (isAdmin: true)**
+2. **관리자 (admin: true)**
    - 자신이 담당한 채팅방에만 메시지 전송 가능
    - 담당하지 않은 채팅방에는 전송 불가
 
