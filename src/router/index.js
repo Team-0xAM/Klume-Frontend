@@ -1,5 +1,7 @@
+// --- Vue Router 기본 ---
 import { createRouter, createWebHistory } from "vue-router";
 
+// --- 인증 / 권한 관련 ---
 import { isAuthenticated } from "@/utils/auth";
 import { organizationRole, fetchOrganizationInfo } from "@/composables/useOrganization.js";
 
@@ -8,88 +10,77 @@ import HomeView from "@/views/HomeView.vue";
 import LoginView from "@/views/LoginView.vue";
 import SignupView from "@/views/SignupView.vue";
 import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
+
+// --- 조직 관련 뷰 ---
 import OrganizationView from "@/views/OrganizationView.vue";
-import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
+import OrganizationCreateView from "@/views/OrganizationCreateView.vue";
+import OrganizationJoinWithCodeView from "@/views/OrganizationJoinWithCodeView.vue";
 
-import HomeView from '@/views/HomeView.vue';
-import CommonTestView from "@/views/test/CommonTestView.vue";
-import SidebarTestView from '@/views/test/SidebarTestView.vue'
-import ModalTestView from "@/views/test/ModalTestView.vue";
-import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue";
-import MeetingRoomList from '@/components/room/MeetingRoomList.vue';
-import AdminRoomPage from '@/views/room/AdminRoomPage.vue';
-import AdminReservationPage from '@/views/adminreservation/AdminReservationPage.vue';
-import userhome from '@/views/test/userhome.vue';
-import ReservationPage from '@/views/reservation/ReservationPage.vue';
-import RoomDetail from '@/views/reservation/RoomDetail.vue';
-import OrganizationDashboard from '@/views/dashboard/OrganizationDashboard.vue';
-import AdminRoomDetail from '@/views/room/AdminRoomDetail.vue';
+// --- 채팅 및 공지 ---
+import ChatRoomListView from "@/views/ChatRoomListView.vue";
+import ChatView from "@/views/ChatView.vue";
+import NoticeAdminPageView from "@/views/NoticeAdminPageView.vue";
 
-// --- 조직 관련 레이아웃 및 페이지 ---
+// --- 레이아웃 및 관리자 뷰 ---
 import OrganizationLayout from "@/components/layout/OrganizationLayout.vue";
 import OrganizationDashboard from "@/views/organization/OrganizationDashboard.vue";
 import RoomManage from "@/views/organization/admin/RoomManage.vue";
 import ReservationManage from "@/views/organization/admin/ReservationManage.vue";
-import ForbiddenView from "@/views/error/ForbiddenView.vue"; // 🚫 403 페이지
 
-// --- routes ---
+// --- 예약 / 회의실 관련 ---
+import MeetingRoomList from "@/components/room/MeetingRoomList.vue";
+import AdminRoomPage from "@/views/room/AdminRoomPage.vue";
+import AdminRoomDetail from "@/views/room/AdminRoomDetail.vue";
+import AdminReservationPage from "@/views/adminreservation/AdminReservationPage.vue";
+import ReservationPage from "@/views/reservation/ReservationPage.vue";
+import RoomDetail from "@/views/reservation/RoomDetail.vue";
+
+// --- 대시보드 (조직 외부용) ---
+import DashboardMain from "@/views/dashboard/OrganizationDashboard.vue";
+
+// --- 조직 내부 페이지 ---
+import MyReservationView from "@/views/organization/MyReservationView.vue";
+import NoticeView from "@/views/organization/NoticeView.vue";
+
+// --- 테스트 뷰 ---
+import CommonTestView from "@/views/test/CommonTestView.vue";
+import SidebarTestView from "@/views/test/SidebarTestView.vue";
+import ModalTestView from "@/views/test/ModalTestView.vue";
+import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue";
+import userhome from "@/views/test/userhome.vue";
+
+// --- 에러 / 예외 뷰 ---
+import ForbiddenView from "@/views/error/ForbiddenView.vue";
+
+
+// --- Routes 설정 ---
 const routes = [
-
+  // 공용
   { path: "/", component: HomeView },
   { path: "/home", component: HomeView },
   { path: "/auth/login", component: LoginView, meta: { requiresGuest: true } },
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
-  { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
-  { path: "/organization/join", component: OrganizationJoinView, meta: { requiresAuth: true } },
 
-  // ✅ 조직 내부 페이지
+  // 조직 관련
+  { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
+  { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
+  { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
+
+  // 채팅 (복수형 - 먼저 정의)
+  { path: "/organizations/:organizationId/chat", component: ChatRoomListView, meta: { requiresAuth: true } },
+  { path: "/organizations/:organizationId/chat/:roomId", component: ChatView, meta: { requiresAuth: true } },
+
+  // 조직 내부 라우트
   {
     path: "/organization/:organizationId",
     component: OrganizationLayout,
     meta: { requiresAuth: true },
     children: [
-      {
-        path: "",
-        name: "OrganizationDashboard",
-        component: OrganizationDashboard,
-      },
-      {
-        path: "reserve",
-        name: "ReservationPage",
-        component: {
-          template: `
-            <div style="padding:40px">
-              <h1>회의실 예약 페이지 (ReservationView.vue 예정)</h1>
-              <p>추후 실제 예약 페이지로 대체될 예정입니다.</p>
-            </div>
-          `,
-        },
-      },
-      {
-        path: "my",
-        name: "MyReservationPage",
-        component: {
-          template: `
-            <div style="padding:40px">
-              <h1>내 예약 보기 페이지 (MyReservationView.vue 예정)</h1>
-            </div>
-          `,
-        },
-      },
-      {
-        path: "notice",
-        name: "NoticePage",
-        component: {
-          template: `
-            <div style="padding:40px">
-              <h1>공지사항 페이지 (NoticeView.vue 예정)</h1>
-            </div>
-          `,
-        },
-      },
-
-      // 👑 관리자 전용
+      { path: "", name: "OrganizationDashboard", component: OrganizationDashboard },
+      { path: "reserve", name: "ReservationPage", component: ReservationPage },
+      { path: "my", name: "MyReservationPage", component: MyReservationView },
+      { path: "notice", name: "NoticePage", component: NoticeView },
       {
         path: "admin/reservations",
         name: "AdminReservationManage",
@@ -105,56 +96,53 @@ const routes = [
     ],
   },
 
-  // 🚫 403 접근 권한 없음
-  {
-    path: "/403",
-    name: "Forbidden",
-    component: ForbiddenView,
-  },
+  // 관리자 공지
+  { path: "/organization/:organizationId/notices", component: NoticeAdminPageView },
 
-    {path: '/', component: HomeView},
-    {path: '/test/common', component: CommonTestView},
-    {path: '/test/sidebar', component: SidebarTestView},
-    {path: '/test/modar', component: ModalTestView},
-    {path: '/test/orgcard', component: OrganizationListTestView},
+  // 회의실 / 예약 관련
+  { path: "/roomlist", component: MeetingRoomList },
+  { path: "/adminroomlist", component: AdminRoomPage },
+  { path: "/adminroomdetail", component: AdminRoomDetail },
+  { path: "/adminreservation", component: AdminReservationPage },
+  { path: "/reservation/:roomId", component: RoomDetail },
 
-    /* 관리자메뉴 회의실 관리페이지 */
-    {path: '/roomlist', component: MeetingRoomList},
-    {path: '/adminroomlist', component: AdminRoomPage},
-    {path: '/adminroomdetail', component: AdminRoomDetail},
+  // 외부 대시보드
+  { path: "/dashboard", component: DashboardMain },
 
-    /* 피그마용 삭제예정 */
-    {path: '/adminreservation', component: AdminReservationPage},
-    {path: '/userhome', component: userhome},
+  // 테스트
+  { path: "/userhome", component: userhome },
+  { path: "/test/common", component: CommonTestView },
+  { path: "/test/sidebar", component: SidebarTestView },
+  { path: "/test/modal", component: ModalTestView },
+  { path: "/test/orgcard", component: OrganizationListTestView },
 
-    { path: '/reservation', component: ReservationPage },
-    { path: '/reservation/:roomId', component: RoomDetail },
-
-    { path: '/dashboard', component: OrganizationDashboard },
-    
+  // 예외
+  { path: "/403", name: "Forbidden", component: ForbiddenView },
 ];
 
-// --- router setup ---
+
+// --- Router 생성 ---
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
 
+
 // --- 라우터 가드 ---
 router.beforeEach(async (to, from, next) => {
   const authenticated = isAuthenticated();
 
-  // 🔒 로그인 필요
+  // 로그인 필요한 페이지 접근 시
   if (to.meta.requiresAuth && !authenticated) {
     return next("/auth/login");
   }
 
-  // 🚫 로그인한 사용자가 비로그인 전용 페이지 접근
+  // 로그인 상태에서 비로그인 페이지 접근 방지
   if (to.meta.requiresGuest && authenticated) {
     return next("/home");
   }
 
-  // 👑 관리자 접근 제한
+  // 관리자 전용 접근 제어
   if (to.meta.requiresAdmin) {
     if (!organizationRole.value && to.params.organizationId) {
       await fetchOrganizationInfo(to.params.organizationId);

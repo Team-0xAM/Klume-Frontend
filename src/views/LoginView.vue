@@ -63,7 +63,7 @@
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { login } from "@/api/auth"
-import { setAccessToken, setUserEmail, setProfileImage } from "@/utils/auth"
+import { setAccessToken, setUserEmail, removeProfileImage } from "@/utils/auth"
 import BaseInput from "@/components/common/BaseInput.vue"
 import GoogleButton from "@/components/common/GoogleButton.vue"
 
@@ -104,20 +104,14 @@ const handleLogin = async (event) => {
     })
 
 
-    // 로그인 성공 시 토큰, 이메일, 프로필 이미지 저장
+    // 로그인 성공 시 토큰, 이메일 저장
     if (response.data.accessToken) {
       setAccessToken(response.data.accessToken)
       setUserEmail(email.value)
 
-
-      // 프로필 이미지가 있으면 저장
-      if (response.data.profileImage) {
-        // 백엔드에서 파일명만 전달하면 public 폴더 경로로 변환
-        const imagePath = response.data.profileImage.startsWith('http')
-          ? response.data.profileImage
-          : `/${response.data.profileImage}`
-        setProfileImage(imagePath)
-      }
+      // 로컬 로그인 시에는 프로필 이미지를 저장하지 않음
+      // 기존에 저장된 프로필 이미지 제거 (이메일 첫 글자를 아바타로 사용)
+      removeProfileImage()
 
       // 로그인 성공 후 이동할 페이지 (새로고침하여 헤더 업데이트)
       window.location.href = '/home'
