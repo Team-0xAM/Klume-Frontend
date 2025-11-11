@@ -1,26 +1,21 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { isAuthenticated, getUserEmail, getProfileImage, logout } from '@/utils/auth'
+import { isAuthenticated, getUserEmail, logout } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
 const isLoggedIn = ref(false)
 const userEmail = ref('')
-const profileImage = ref('')
 const showLogoutModal = ref(false)
-const imageError = ref(false)
 
 // 로그인 상태 확인 함수
 const checkAuthStatus = () => {
   const authenticated = isAuthenticated()
   const email = getUserEmail()
-  const image = getProfileImage()
 
   isLoggedIn.value = authenticated
   userEmail.value = email || ''
-  profileImage.value = image || ''
-  imageError.value = false // 이미지 에러 상태 초기화
 }
 
 // 컴포넌트 마운트 시 체크
@@ -34,7 +29,7 @@ watch(() => route.path, () => {
 }, { immediate: true })
 
 // localStorage 변경 감지 (같은 탭에서 로그인 시)
-watch(() => [isAuthenticated(), getUserEmail(), getProfileImage()], () => {
+watch(() => [isAuthenticated(), getUserEmail()], () => {
   checkAuthStatus()
 })
 
@@ -59,11 +54,6 @@ const goHome = () => {
 const getInitial = (email) => {
   if (!email) return '?'
   return email.charAt(0).toUpperCase()
-}
-
-// 이미지 로딩 에러 처리
-const handleImageError = () => {
-  imageError.value = true
 }
 
 // 로그아웃 처리
@@ -92,14 +82,7 @@ const handleLogout = () => {
       <!-- 로그인 된 상태 -->
       <div v-else class="user-info" @click="showLogoutModal = true">
         <div class="profile-image">
-          <img
-            v-if="profileImage && !imageError"
-            :src="profileImage"
-            alt="프로필"
-            class="profile-img"
-            @error="handleImageError"
-          />
-          <span v-else class="profile-initial">{{ getInitial(userEmail) }}</span>
+          <span class="profile-initial">{{ getInitial(userEmail) }}</span>
         </div>
         <span class="user-email">{{ userEmail }}</span>
       </div>
@@ -186,13 +169,6 @@ const handleLogout = () => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(12, 28, 84, 0.15);
-}
-
-.profile-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .profile-initial {

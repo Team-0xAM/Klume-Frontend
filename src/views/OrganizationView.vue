@@ -54,33 +54,6 @@ const organizations = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 
-// 더미 데이터
-const dummyData = [
-  {
-    id: 1,
-    name: '한화시스템 BEYOND SW캠프',
-    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
-    logo: '/assets/images/no_image.png',
-  },
-  {
-    id: 2,
-    name: '한화시스템 BEYOND SW캠프',
-    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
-    logo: '/assets/images/no_image.png',
-  },
-  {
-    id: 3,
-    name: '한화시스템 BEYOND SW캠프',
-    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
-    logo: '/assets/images/no_image.png',
-  },
-  {
-    id: 4,
-    name: '한화시스템 BEYOND SW캠프',
-    description: '한화시스템 오프라인 백엔드 개발 부트캠프',
-    logo: '/assets/images/no_image.png',
-  },
-]
 
 // 조직 목록 불러오기
 const fetchOrganizations = async () => {
@@ -89,17 +62,22 @@ const fetchOrganizations = async () => {
 
   try {
     const response = await getMyOrganizations()
+    console.log('조직 목록 응답:', response.data)
 
     // 백엔드 응답 데이터 형식에 맞게 매핑
+    // 백엔드 OrganizationResponseDTO: organizationId, name, description, imageUrl
     organizations.value = response.data.map(org => ({
-      id: org.id || org.organizationId,
-      name: org.name || org.organizationName,
-      description: org.description || '',
-      logo: org.logo || org.logoUrl || '/assets/images/no_image.png'
+      id: org.organizationId,
+      name: org.name,
+      description: org.description || '조직 설명이 없습니다',
+      logo: org.imageUrl || '/assets/images/no_image.png'
     }))
+
+    console.log('매핑된 조직 목록:', organizations.value)
   } catch (error) {
-    // API 실패 시 더미 데이터 사용
-    organizations.value = dummyData
+    console.error('조직 목록 조회 실패:', error)
+    console.error('에러 상세:', error.response?.data)
+    errorMessage.value = '조직 목록을 불러오는데 실패했습니다.'
   } finally {
     isLoading.value = false
   }
@@ -111,7 +89,7 @@ onMounted(() => {
 })
 
 const goJoinPage = () => {
-  router.push('/organization/join')
+  router.push('/organization/new')
 }
 </script>
 
