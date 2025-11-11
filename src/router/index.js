@@ -10,6 +10,12 @@ import SignupView from "@/views/SignupView.vue";
 import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
+import ChatRoomListView from "@/views/ChatRoomListView.vue";
+import ChatView from "@/views/ChatView.vue";
+import NoticeAdminPageView from "@/views/NoticeAdminPageView.vue";
+import OrganizationCreateView from "@/views/OrganizationCreateView.vue";
+import OrganizationJoinWithCodeView from "@/views/OrganizationJoinWithCodeView.vue";
+
 
 import CommonTestView from "@/views/test/CommonTestView.vue";
 import SidebarTestView from '@/views/test/SidebarTestView.vue'
@@ -54,6 +60,7 @@ const routes = [
     {path: '/test/modar', component: ModalTestView},
     {path: '/test/orgcard', component: OrganizationListTestView},
 
+
     /* 관리자메뉴 회의실 관리페이지 */
     {path: '/adminroomlist', component: AdminRoomPage},
     {
@@ -71,6 +78,14 @@ const routes = [
     { path: '/reservation/:roomId', component: RoomDetail },
 
     { path: '/dashboard', component: OrganizationDashboard },
+
+    // 채팅 관련 라우트 (관리자용)
+    {path: '/organizations/:organizationId/chat', component: ChatRoomListView, meta: { requiresAuth: true }},
+    {path: '/organizations/:organizationId/chat/:roomId', component: ChatView, meta: { requiresAuth: true }},
+
+    {path: '/organization/:organizationId/notices', component: NoticeAdminPageView},
+    {path: '/organization/new', component: OrganizationJoinView},
+    {path: '/organization/create', component: OrganizationCreateView},
 
 ];
 
