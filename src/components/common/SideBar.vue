@@ -1,36 +1,36 @@
 <template>
   <div class="sidebar">
-    <!-- 프로필 섹션 -->
-    <div class="profile-section">
-      <div class="profile-image" :style="profileImageStyle">
-        <img
-          v-if="profileImage && !imageError"
-          :src="profileImage"
-          alt="프로필"
-          @error="handleImageError"
-        />
-        <span v-else class="profile-initial">{{ getInitial(organizationName) }}</span>
+    <div class="sidebar-top">
+      <!-- 프로필 섹션 -->
+      <div class="profile-section">
+        <div class="profile-image" :style="profileImageStyle">
+          <img
+            v-if="profileImage && !imageError"
+            :src="profileImage"
+            alt="프로필"
+            @error="handleImageError"
+          />
+          <span v-else class="profile-initial">{{ getInitial(organizationName) }}</span>
+        </div>
+        <div class="profile-name">{{ organizationName }}</div>
       </div>
-      <div class="profile-name">{{ organizationName }}</div>
-    </div>
 
-    <!-- 상단 메뉴 -->
-    <div class="menu-section">
-      <slot name="main-menu"></slot>
-    </div>
-
-    <!-- 관리자 메뉴: role이 'ADMIN'일 때만 렌더링 -->
-    <template v-if="role === 'ADMIN' && $slots['admin-menu']">
-      <hr />
-      <div v-if="adminMenuTitle" class="admin-menu-title">
-        {{ adminMenuTitle }}
-      </div>
+      <!-- 상단 메뉴 -->
       <div class="menu-section">
-        <slot name="admin-menu"></slot>
+        <slot name="main-menu"></slot>
       </div>
-    </template>
 
-    <hr />
+      <!-- 관리자 메뉴: role이 'ADMIN'일 때만 렌더링 -->
+      <template v-if="role === 'ADMIN' && $slots['admin-menu']">
+        <hr />
+        <div v-if="adminMenuTitle" class="admin-menu-title">
+          {{ adminMenuTitle }}
+        </div>
+        <div class="menu-section">
+          <slot name="admin-menu"></slot>
+        </div>
+      </template>
+    </div>
 
     <!-- 하단 사용자 -->
     <div class="bottom-user">
@@ -125,6 +125,14 @@ const profileImageStyle = computed(() => {
   flex-direction: column;
   justify-content: space-between;
   font-family: 'Noto Sans KR', sans-serif;
+}
+
+.sidebar-top {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .profile-section {

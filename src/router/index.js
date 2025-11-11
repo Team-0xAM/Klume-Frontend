@@ -24,8 +24,11 @@ import NoticeAdminPageView from "@/views/NoticeAdminPageView.vue";
 // --- 레이아웃 및 관리자 뷰 ---
 import OrganizationLayout from "@/components/layout/OrganizationLayout.vue";
 import OrganizationDashboard from "@/views/organization/OrganizationDashboard.vue";
+import MyReservationView from "@/views/organization/MyReservationView.vue";
+import NoticeView from "@/views/organization/NoticeView.vue";
 import RoomManage from "@/views/organization/admin/RoomManage.vue";
 import ReservationManage from "@/views/organization/admin/ReservationManage.vue";
+import OrganizationManageView from "@/views/organization/admin/OrganizationManageView.vue";
 
 // --- 예약 / 회의실 관련 ---
 import MeetingRoomList from "@/components/room/MeetingRoomList.vue";
@@ -37,10 +40,6 @@ import RoomDetail from "@/views/reservation/RoomDetail.vue";
 
 // --- 대시보드 (조직 외부용) ---
 import DashboardMain from "@/views/dashboard/OrganizationDashboard.vue";
-
-// --- 조직 내부 페이지 ---
-import MyReservationView from "@/views/organization/MyReservationView.vue";
-import NoticeView from "@/views/organization/NoticeView.vue";
 
 // --- 테스트 뷰 ---
 import CommonTestView from "@/views/test/CommonTestView.vue";
@@ -56,8 +55,8 @@ import ForbiddenView from "@/views/error/ForbiddenView.vue";
 // --- Routes 설정 ---
 const routes = [
   // 공용
-  { path: "/", component: HomeView },
   { path: "/home", component: HomeView },
+  { path: "/", redirect: "/home" },
   { path: "/auth/login", component: LoginView, meta: { requiresGuest: true } },
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
@@ -79,8 +78,9 @@ const routes = [
     children: [
       { path: "", name: "OrganizationDashboard", component: OrganizationDashboard },
       { path: "reserve", name: "ReservationPage", component: ReservationPage },
-      { path: "my", name: "MyReservationPage", component: MyReservationView },
-      { path: "notice", name: "NoticePage", component: NoticeView },
+      { path: "my-reservations", name: "MyReservationPage", component: MyReservationView },
+      { path: "notices", name: "NoticePage", component: NoticeView },
+      { path: "dashboard", name: "OrganizationDashboardExternal", component: DashboardMain },
       {
         path: "admin/reservations",
         name: "AdminReservationManage",
@@ -91,6 +91,18 @@ const routes = [
         path: "admin/rooms",
         name: "AdminRoomManage",
         component: RoomManage,
+        meta: { requiresAdmin: true },
+      },
+      {
+        path: "admin/rooms/:roomId",
+        name: "AdminRoomDetail",
+        component: AdminRoomDetail,
+        meta: { requiresAdmin: true },
+      },
+      {
+        path: "admin/organization",
+        name: "OrganizationManage",
+        component: OrganizationManageView,
         meta: { requiresAdmin: true },
       },
     ],
@@ -104,6 +116,7 @@ const routes = [
   { path: "/adminroomlist", component: AdminRoomPage },
   { path: "/adminroomdetail", component: AdminRoomDetail },
   { path: "/adminreservation", component: AdminReservationPage },
+  { path: "/reservation", component: ReservationPage },
   { path: "/reservation/:roomId", component: RoomDetail },
 
   // 외부 대시보드
