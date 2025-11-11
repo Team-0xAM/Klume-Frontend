@@ -48,10 +48,10 @@
           <!-- 반복 -->
           <div v-if="repeatType === 'repeat'">
             <div class="repeat-date-group">
-  <input type="date" v-model="form.repeatStart" />
-  <span>~</span>
-  <input type="date" v-model="form.repeatEnd" />
-</div>
+              <input type="date" v-model="form.repeatStart" />
+              <span>~</span>
+              <input type="date" v-model="form.repeatEnd" />
+            </div>
 
             <div class="weekday-buttons">
               <button
@@ -127,7 +127,22 @@ function toggleDay(day) {
 }
 
 function submit() {
+  // 필수값 체크
+  if (!form.value.name) return alert("이름을 입력해주세요.")
+  if (!form.value.startTime || !form.value.endTime)
+    return alert("이용 시작/종료 시간을 입력해주세요.")
+
+  if (repeatType.value === 'repeat') {
+    if (!form.value.repeatStart || !form.value.repeatEnd)
+      return alert("반복 기간을 선택해주세요.")
+  } else {
+    if (!form.value.singleDate)
+      return alert("날짜를 선택해주세요.")
+  }
+
+  // 호출 시 반복 타입 포함해서 전달
   emit('save', { ...form.value, repeatType: repeatType.value })
+  emit('close')
 }
 </script>
 

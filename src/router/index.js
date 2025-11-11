@@ -6,7 +6,6 @@ import SidebarTestView from '@/views/test/SidebarTestView.vue'
 import ModalTestView from "@/views/test/ModalTestView.vue";
 import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue";
 
-import MeetingRoomList from '@/components/room/MeetingRoomList.vue';
 import AdminRoomPage from '@/views/room/AdminRoomPage.vue';
 import AdminReservationPage from '@/views/adminreservation/AdminReservationPage.vue';
 import userhome from '@/views/test/userhome.vue';
@@ -36,8 +35,18 @@ const routes = [
     {path: '/test/orgcard', component: OrganizationListTestView},
 
     /* 관리자메뉴 회의실 관리페이지 */
-    {path: '/adminroomlist', component: AdminRoomPage},
-    {path: '/adminroomdetail', component: AdminRoomDetail},
+    {
+  path: '/organization/:organizationId/admin/rooms',
+  name: 'AdminRoomList',
+  component: AdminRoomPage,
+  meta: { requiresAdmin: true }
+    },
+    {
+      path: "/organization/:organizationId/admin/rooms/:roomId",
+      name: "AdminRoomDetail",
+      component: AdminRoomDetail,
+      meta: { requiresAdmin: true },
+    },
 
     /* 피그마용 삭제예정 */
     {path: '/adminreservation', component: AdminReservationPage},

@@ -9,7 +9,7 @@
     <!-- 상단 정보 -->
     <div class="table-header">
       <span>총 <span class="count">{{ roomCount }}</span>개</span>
-      <button class="add-btn" @click="showModal = true">회의실 추가</button>
+      <button class="add-btn" @click="showAddModal = true">회의실 추가</button>
     </div>
 
     <!-- 목록 테이블 -->
@@ -34,17 +34,20 @@
           <td>{{ room.name }}</td>
           <td>{{ room.description || '-' }}</td>
           <td>{{ room.capacity }}</td>
-          <td>{{ room.availableTime }}</td>
+          <td>
+            <span v-if="room.availableTime > 0">{{ room.availableTime }}개</span>
+            <span v-else style="color: #999;">미등록</span>
+          </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- 모달 연결 -->
+    <!-- 회의실 등록 모달 -->
     <AddRoomModal
-      v-if="showModal"
-      @close="showModal = false"
-      @save="addRoom"
-    />
+      v-if="showAddModal"
+      :organization-id="organizationId"
+      @close="showAddModal = false"
+      @saved="fetchRooms" />
   </div>
 </template>
 
@@ -52,7 +55,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AddRoomModal from './AddRoomModal.vue'
-import { getRooms, createRoom } from '@/api/room/roomApi.js'
+import { getRooms, createRoom, getAvailableTimes } from '@/api/room/roomApi.js'
 
 const props = defineProps({
   organizationId: {
@@ -63,7 +66,7 @@ const props = defineProps({
 
 const router = useRouter()
 
-const showModal = ref(false)
+const showAddModal = ref(false)
 const rooms = ref([])
 
 const roomCount = computed(() => rooms.value.length)
@@ -74,10 +77,16 @@ async function fetchRooms() {
   try {
     const { data } = await getRooms(props.organizationId)
     rooms.value = data.map(room => ({
-      ...room,
-      // availableTime: '-' // TODO: 예약가능시간 연동 시 변경
-      availableTime: room.availableTimeCount
+      id: room.id,
+      name: room.name,
+      description: room.description,
+      capacity: room.capacity,
+      availableTime: 0 // 초기화
     }))
+    for (const room of rooms.value) {
+      const res = await getAvailableTimes(props.organizationId, room.id)
+      room.availableTime = res.data.length // 개수 반영
+    }
   } catch (error) {
     console.error("회의실 목록 조회 실패:", error)
   }
@@ -97,7 +106,7 @@ async function addRoom(roomData, imageFile) {
       availableTime: '-' 
     })
 
-    showModal.value = false
+    showAddModal.value = false
   } catch (error) {
     console.error("회의실 등록 실패:", error)
     alert("회의실 등록 실패")
@@ -143,6 +152,7 @@ async function addRoom(roomData, imageFile) {
 .table-header span.count {
   color: #f9c802;
   font-weight: 700;
+  margin: 0;
 }
 
 .add-btn {
@@ -170,11 +180,13 @@ async function addRoom(roomData, imageFile) {
   padding: 12px 10px;
   border-bottom: 1px solid #ddd;
   font-weight: 600;
+  text-align: center;
 }
 
 .room-table td {
   padding: 10px;
   border-bottom: 1px solid #eee;
   color: #333;
+  text-align: center;
 }
 </style>

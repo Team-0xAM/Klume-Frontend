@@ -108,9 +108,32 @@ const days = [
   { label: '일', value: 'SUN' }
 ]
 
-// 초기값 세팅
-watch(() => props.time, (newVal) => {
-  localTime.value = { ...newVal }
+watch(() => props.time, (t) => {
+  if (!t) return
+
+  localTime.value = {
+    id: t.id,
+    name: t.name,
+    startTime: t.startTime,
+    endTime: t.endTime,
+    interval: t.interval === "-" ? "none" : t.interval,
+
+    repeatStart: t.repeatStart || "",
+    repeatEnd: t.repeatEnd || "",
+    repeatDays: Array.isArray(t.repeatDays) ? [...t.repeatDays] : [],
+
+    singleDate: (!t.repeatStart || t.repeatStart === t.repeatEnd) ? t.repeatStart : "",
+
+    // 예약 오픈 설정 파싱
+    openDaysBefore: t.openTime && t.openTime.includes("일전")
+      ? Number(t.openTime.split("일전")[0])
+      : "",
+    openTime: t.openTime && t.openTime.includes(":")
+      ? t.openTime.split(" ")[1]
+      : "",
+
+    repeatType: (t.repeatStart && t.repeatEnd && t.repeatStart !== t.repeatEnd) ? "repeat" : "single"
+  }
 }, { immediate: true })
 
 function toggleDay(day) {
@@ -120,6 +143,19 @@ function toggleDay(day) {
 }
 
 function save() {
+  // 필수값 체크
+  if (!localTime.value.name) return alert("이름을 입력해주세요.")
+  if (!localTime.value.startTime || !localTime.value.endTime)
+    return alert("이용 시작/종료 시간을 입력해주세요.")
+
+  if (localTime.value.repeatType === "repeat") {
+    if (!localTime.value.repeatStart || !localTime.value.repeatEnd)
+      return alert("반복 기간을 입력해주세요.")
+  } else {
+    if (!localTime.value.singleDate)
+      return alert("하루 예약 날짜를 선택해주세요.")
+  }
+
   emit('save', { ...localTime.value })
   emit('close')
 }
