@@ -10,6 +10,7 @@ import SignupView from "@/views/SignupView.vue";
 import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
+import NoticeAdminPageView from "@/views/NoticeAdminPageView.vue";
 
 
 const routes = [
@@ -24,7 +25,8 @@ const routes = [
     {path: '/auth/signup', component: SignupView, meta: { requiresGuest: true }},
     {path: '/oauth/callback', component: OAuthCallbackView},
     {path: '/organization', component: OrganizationView},
-    {path: '/organization/join', component: OrganizationJoinView}
+    {path: '/organization/join', component: OrganizationJoinView},
+    {path: '/organization/:organizationId/notices', component: NoticeAdminPageView}
 
 ];
 
