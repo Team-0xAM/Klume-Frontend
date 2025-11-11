@@ -95,8 +95,6 @@ const roomId = Number(route.params.roomId)
 const room = ref({})
 const availableTimes = ref([])
 
-const showEditModal = ref(false)
-
 const showEditTimeModal = ref(false)
 
 const showAddModal = ref(false)

@@ -21,7 +21,6 @@ const routes = [
     {path: '/test/orgcard', component: OrganizationListTestView},
 
     /* 관리자메뉴 회의실 관리페이지 */
-    {path: '/roomlist', component: MeetingRoomList},
     {path: '/adminroomlist', component: AdminRoomPage},
     {path: '/adminroomdetail', component: AdminRoomDetail},
 
