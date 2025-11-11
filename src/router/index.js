@@ -10,6 +10,8 @@ import SignupView from "@/views/SignupView.vue";
 import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
+import ChatRoomListView from "@/views/ChatRoomListView.vue";
+import ChatView from "@/views/ChatView.vue";
 
 
 const routes = [
@@ -24,7 +26,10 @@ const routes = [
     {path: '/auth/signup', component: SignupView, meta: { requiresGuest: true }},
     {path: '/oauth/callback', component: OAuthCallbackView},
     {path: '/organization', component: OrganizationView},
-    {path: '/organization/join', component: OrganizationJoinView}
+    {path: '/organization/join', component: OrganizationJoinView},
+    // 채팅 관련 라우트 (관리자용)
+    {path: '/organizations/:organizationId/chat', component: ChatRoomListView, meta: { requiresAuth: true }},
+    {path: '/organizations/:organizationId/chat/:roomId', component: ChatView, meta: { requiresAuth: true }}
 
 ];
 
