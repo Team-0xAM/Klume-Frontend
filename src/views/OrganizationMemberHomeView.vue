@@ -41,31 +41,31 @@
             <table class="table small">
                 <thead>
                     <tr>
+                        <th>이용 가능일</th>
                         <th>이용시간</th>
-                        <th>예약 오픈일</th>
                         <th>오픈 시각</th>
                         <th>상태</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="(item, i) in filteredOpenSlots" :key="i">
+                        <td>{{ formatDate(item.date) }}</td>
                         <td>
                             {{ item.availableStartTime }} ~ {{ item.availableEndTime }}
                         </td>
-                        <td>{{ item.reservationOpenDay }}일 전</td>
                         <td>{{ item.reservationOpenTime }}</td>
                         <td>
                             <span class="status" :class="{
-                                upcoming: item.repeatEndDay && new Date(item.repeatEndDay) >= new Date(),
-                                closed: !item.repeatEndDay || new Date(item.repeatEndDay) < new Date(),
+                                upcoming: isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
+                                closed: !isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
                             }">
-                                {{ item.repeatEndDay && new Date(item.repeatEndDay) >= new Date() ? "오픈예정" : "마감" }}
+                                {{ isReservationOpen(item.reservationOpenDay, item.reservationOpenTime) ? "오픈예정" : "마감" }}
                             </span>
                         </td>
                     </tr>
                     <tr v-if="!filteredOpenSlots.length">
                         <td colspan="4" class="empty-text">
-                            해당 회의실의 예약 오픈 정보가 없습니다
+                            해당 회의실의 예약 가능 정보가 없습니다
                         </td>
                     </tr>
                 </tbody>
@@ -107,17 +107,24 @@ const roomOptions = ref([]);
 // 일자별 예약 가능 시간 데이터
 const dailyAvailableTimes = ref([]);
 
-// 선택한 회의실만 필터링
-const filteredOpenSlots = computed(() =>
-    dailyAvailableTimes.value.filter(
-        (slot) => slot.roomName === selectedRoom.value
+// 선택한 회의실 + 오늘 예약 오픈되는 것만 필터링
+const filteredOpenSlots = computed(() => {
+    // 한국 시간 기준 오늘 날짜
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}` // YYYY-MM-DD
+
+    return dailyAvailableTimes.value.filter(
+        (slot) => slot.roomName === selectedRoom.value && slot.reservationOpenDay === todayStr
     )
-);
+});
 
 // 회의실 목록과 예약 가능 시간 조회
 const fetchRoomsAndAvailableTimes = async () => {
     try {
-        // 1. 회의실 목록 조회
+        // 1. 회의실 목록 조회 (모든 회의실)
         const roomsRes = await api.get(`/organizations/${organizationId.value}/rooms`)
         const rooms = Array.isArray(roomsRes.data) ? roomsRes.data : []
 
@@ -125,36 +132,23 @@ const fetchRoomsAndAvailableTimes = async () => {
         roomOptions.value = rooms.map(room => room.name)
         selectedRoom.value = roomOptions.value[0] || ""
 
-        // 2. 각 회의실의 예약 가능 시간 조회
-        const allTimes = []
+        // 2. 오늘 이후 이용 가능한 일자별 예약 가능 시간 조회
+        const timesRes = await api.get(`/organizations/${organizationId.value}/daily-available-times/today`)
+        const times = Array.isArray(timesRes.data) ? timesRes.data : []
 
-        for (const room of rooms) {
-            try {
-                const timesRes = await api.get(`/organizations/${organizationId.value}/rooms/${room.id}/available-times`)
-                const times = Array.isArray(timesRes.data) ? timesRes.data : []
-
-                // 각 예약 가능 시간에 회의실 이름 추가
-                times.forEach(time => {
-                    allTimes.push({
-                        roomName: room.name,
-                        availableStartTime: time.availableStartTime,
-                        availableEndTime: time.availableEndTime,
-                        reservationOpenDay: time.reservationOpenDay, // Integer: N일 전
-                        reservationOpenTime: time.reservationOpenTime,
-                        repeatStartDay: time.repeatStartDay,
-                        repeatEndDay: time.repeatEndDay
-                    })
-                })
-            } catch (err) {
-                console.error(`회의실 ${room.name}의 예약 가능 시간 조회 실패:`, err)
-            }
-        }
-
-        dailyAvailableTimes.value = allTimes
+        // 데이터 매핑
+        dailyAvailableTimes.value = times.map(time => ({
+            roomName: time.room_name,
+            availableStartTime: time.available_start_time,
+            availableEndTime: time.available_end_time,
+            date: time.date, // 이용 가능일
+            reservationOpenDay: time.reservation_open_day, // 예약 오픈일 (YYYY-MM-DD)
+            reservationOpenTime: time.reservation_open_time
+        }))
     } catch (err) {
-        console.error("회의실 및 예약 가능 시간 조회 실패:", err);
+        console.error("회의실 예약 가능 시간 조회 실패:", err)
         dailyAvailableTimes.value = []
-        roomOptions.value = []
+        // 회의실 목록은 유지 (에러가 나도 회의실 선택은 가능하도록)
     }
 };
 
@@ -165,14 +159,17 @@ const formatDate = (dateStr) => {
     return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
-// 오픈예정/마감 상태 판별
-const isUpcoming = (dateStr) => {
-    if (!dateStr) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const open = new Date(dateStr);
-    open.setHours(0, 0, 0, 0);
-    return open >= today;
+// 예약 오픈 상태 판별 (오늘 날짜 + 오픈 시각 기준)
+const isReservationOpen = (openDay, openTime) => {
+    if (!openDay || !openTime) return false;
+
+    const now = new Date();
+    const [hours, minutes] = openTime.split(':');
+    const openDateTime = new Date(openDay);
+    openDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    // 현재 시간이 오픈 시간보다 이전이면 오픈예정
+    return now < openDateTime;
 };
 
 // 오늘 내 예약
