@@ -61,58 +61,92 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { fetchOrganizationInfo, organizationRole, organizationName } from '@/composables/useOrganization.js'
+import { getNotices } from '@/api/notice'
+import api from '@/api/axios'
+
+const route = useRoute()
+const router = useRouter()
+const organizationId = ref(parseInt(route.params.organizationId))
 
 const org = ref({
-  name: '한화 BEYOND SW캠프',
-  memberCount: 42,
-  roomCount: 7,
-  role: '일반 구성원',
+  name: organizationName.value || '조직',
+  memberCount: 0,
+  roomCount: 0,
+  role: '로딩 중...',
 })
 
 const todayReservations = ref([])
 const notices = ref([])
 const myReservations = ref([])
+const isLoading = ref(true)
 
-onMounted(() => {
-  loadDummyData()
+// 역할 한글 변환
+const roleText = computed(() => {
+  if (organizationRole.value === 'ADMIN') return '관리자'
+  if (organizationRole.value === 'MEMBER') return '일반 구성원'
+  return '로딩 중...'
 })
 
-function loadDummyData() {
-  todayReservations.value = [
-    {
-      id: 1,
-      room: '3층 회의실',
-      time: '13:00~14:00',
-      user: '19기 정유진',
-      participants: 2,
-      status: 'ongoing',
-      statusText: '진행 중',
-    },
-    {
-      id: 2,
-      room: '4층 회의실',
-      time: '18:00~20:00',
-      user: '18기 김민지',
-      participants: 3,
-      status: 'upcoming',
-      statusText: '이용 예정',
-    },
-  ]
+onMounted(async () => {
+  await loadDashboardData()
+})
 
-  notices.value = [
-    { id: 1, title: '[공지] 5층 회의실 리모델링 안내', date: '2025-11-09' },
-    { id: 2, title: '[공지] 전원 점검으로 11/12 예약 제한', date: '2025-11-08' },
-  ]
+async function loadDashboardData() {
+  isLoading.value = true
 
-  myReservations.value = [
-    { id: 10, room: '5층 테이블2', date: '2025-11-05', time: '18:00~20:00' },
-    { id: 11, room: '3층 회의실', date: '2025-11-03', time: '20:00~22:00' },
-  ]
+  try {
+    // 1. 조직 정보 로드
+    await fetchOrganizationInfo(organizationId.value)
+    org.value.name = organizationName.value
+    org.value.role = roleText.value
+
+    // 2. 공지사항 로드 (최근 2개만)
+    try {
+      const noticeRes = await getNotices(organizationId.value)
+      const noticeData = Array.isArray(noticeRes.data) ? noticeRes.data : []
+      notices.value = noticeData.slice(0, 2).map(n => ({
+        id: n.noticeId || n.id,
+        title: n.title,
+        date: n.createdAt ? n.createdAt.split(' ')[0] : ''
+      }))
+    } catch (err) {
+      console.error('공지사항 로드 실패:', err)
+      notices.value = []
+    }
+
+    // 3. 조직 통계 로드
+    try {
+      // 조직 통계 조회 - 구성원 수, 회의실 수 등
+      const statsRes = await api.get(`/organizations/${organizationId.value}/stats`)
+      console.log('조직 통계 조회 응답:', statsRes.data)
+      org.value.memberCount = statsRes.data.memberCount || 0
+      org.value.roomCount = statsRes.data.roomCount || 0
+    } catch (err) {
+      console.error('조직 통계 로드 실패:', err)
+      console.error('에러 상세:', err.response?.data)
+      org.value.memberCount = 0
+      org.value.roomCount = 0
+    }
+
+    // 오늘 예약, 내 최근 예약은 백엔드 API가 준비되면 추가 예정
+    // TODO: 백엔드에 다음 API 추가 필요
+    // - GET /organizations/{organizationId}/reservations/today (오늘 예약)
+    // - GET /organizations/{organizationId}/reservations/my/recent (내 최근 예약)
+    todayReservations.value = []
+    myReservations.value = []
+
+  } catch (error) {
+    console.error('대시보드 로드 실패:', error)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 function goNotice(id) {
-  alert(`공지 ${id} 상세 페이지로 이동`)
+  router.push(`/organization/${organizationId.value}/notice/${id}`)
 }
 </script>
 

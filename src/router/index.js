@@ -107,7 +107,7 @@ const routes = [
   },
 
   // 관리자 공지
-  { path: "/organization/:organizationId/notices", component: NoticeAdminPageView },
+  { path: "/organization/:organizationId/admin/notices", component: NoticeAdminPageView },
 
   // 회의실 / 예약 관련
   { path: "/roomlist", component: MeetingRoomList },

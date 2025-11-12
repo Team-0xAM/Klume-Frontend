@@ -56,7 +56,7 @@
         <NavButton
           label="공지사항 관리"
           icon="icon_bookmark.png"
-          :to="`/organization/${route.params.organizationId}/notices`"
+          :to="`/organization/${route.params.organizationId}/admin/notices`"
         />
         <NavButton
           label="채팅 문의"

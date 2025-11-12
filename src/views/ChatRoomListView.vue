@@ -1,6 +1,21 @@
 <template>
   <div class="chat-room-list-view">
-    <!-- 채팅방 목록 (왼쪽) -->
+    <!-- 사이드바 (왼쪽) -->
+    <SideBar
+      :organization-name="organizationName"
+      :user-name="userName"
+      admin-menu-title="관리자메뉴"
+    >
+      <template #main-menu>
+        <!-- 일반 메뉴 슬롯 -->
+      </template>
+
+      <template #admin-menu>
+        <!-- 관리자 메뉴 슬롯 -->
+      </template>
+    </SideBar>
+
+    <!-- 채팅방 목록 (중간) -->
     <div class="chat-list-container">
       <div class="chat-list-header">
         <h2 class="page-title">{{ selectedRoom ? (selectedRoom.assignedToName || '미배정') : '채팅 문의' }}</h2>
@@ -99,10 +114,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import SideBar from '../components/common/SideBar.vue'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
+import { fetchOrganizationInfo, organizationRole, organizationName, organizationImage, userNickname, organizationId as orgId } from '@/composables/useOrganization.js'
 
 const route = useRoute()
 
@@ -112,6 +129,8 @@ const organizationId = ref(parseInt(route.params.organizationId) || 1)
 // 사용자 정보
 const currentUserEmail = ref(localStorage.getItem('email') || '')
 const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
+const userName = ref(currentUserEmail.value)
+const organizationName = ref('조직명') // 하드코딩(임시)
 const isAdmin = ref(false) // 하드코딩(임시) 관리자 여부 - API에서 가져와야 함
 
 // 채팅방 목록
@@ -219,7 +238,10 @@ const handleUnassign = async (roomId) => {
 }
 
 // 컴포넌트 마운트 시 목록 로드
-onMounted(() => {
+onMounted(async () => {
+  // 조직 정보 로드
+  await fetchOrganizationInfo(organizationId.value)
+  // 채팅방 목록 로드
   loadChatRooms()
 })
 </script>
