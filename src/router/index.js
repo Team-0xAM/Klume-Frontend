@@ -61,23 +61,6 @@ const routes = [
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
 
-    /* 관리자메뉴 예약관리 페이지 */
-    {path: '/adminreservation', component: AdminReservationPage},
-
-    /* 관리자메뉴 회의실 관리페이지 */
-    {
-      path: '/organization/:organizationId/admin/rooms',
-      name: 'AdminRoomList',
-      component: AdminRoomPage,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: "/organization/:organizationId/admin/rooms/:roomId",
-      name: "AdminRoomDetail",
-      component: AdminRoomDetail,
-      meta: { requiresAdmin: true },
-    },
-
     /* 피그마용 삭제예정 */
     {path: '/userhome', component: userhome},
 
@@ -100,7 +83,7 @@ const routes = [
       {
         path: "admin/reservations",
         name: "AdminReservationManage",
-        component: ReservationManage,
+        component: AdminReservationPage,
         meta: { requiresAdmin: true },
       },
       {
