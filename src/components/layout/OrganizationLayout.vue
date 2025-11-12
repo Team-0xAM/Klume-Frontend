@@ -56,12 +56,12 @@
         <NavButton
           label="공지사항 관리"
           icon="icon_bookmark.png"
-          :to="`/organization/${route.params.organizationId}/admin/notices`"
+          :to="{ name: 'AdminNoticeManage', params: { organizationId: route.params.organizationId } }"
         />
         <NavButton
           label="채팅 문의"
           icon="icon_circle.png"
-          :to="`/organizations/${route.params.organizationId}/chat`"
+          :to="{ name: 'ChatRoomList', params: { organizationId: route.params.organizationId } }"
         />
       </template>
     </SideBar>
