@@ -87,13 +87,13 @@ const routes = [
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms",              // ✅ 회의실 목록 (사이드바 유지)
+        path: "admin/rooms",
         name: "AdminRoomList",
-        component: AdminRoomPage,         // 기존 AdminRoomPage 그대로 사용
+        component: AdminRoomPage,
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms/:roomId",      // ✅ 회의실 상세 (사이드바 유지)
+        path: "admin/rooms/:roomId",
         name: "AdminRoomDetail",
         component: AdminRoomDetail,
         meta: { requiresAdmin: true },
