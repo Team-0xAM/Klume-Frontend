@@ -238,12 +238,12 @@ onMounted(async () => {
 /* 각 열 비율 */
 .notice-table th:nth-child(1),
 .notice-table td:nth-child(1) {
-  width: 10%;
+  width: 8%;
 }
 
 .notice-table th:nth-child(2),
 .notice-table td:nth-child(2) {
-  width: 40%;
+  width: 35%;
   text-align: center;
   white-space: nowrap;           /* 줄바꿈 금지 */
   overflow: hidden;              /* 넘친 부분 숨김 */
@@ -252,7 +252,7 @@ onMounted(async () => {
 
 .notice-table th:nth-child(3),
 .notice-table td:nth-child(3) {
-  width: 20%;
+  width: 18%;
 }
 
 .notice-table th:nth-child(4),
@@ -262,8 +262,9 @@ onMounted(async () => {
 
 .notice-table th:nth-child(5),
 .notice-table td:nth-child(5) {
-  width: 10%;
+  width: 19%;
   white-space: nowrap; /* 버튼 줄바꿈 방지 */
+  padding-right: 24px; /* 우측 여백 추가 */
 }
 
 /* ---------- 버튼 ---------- */
