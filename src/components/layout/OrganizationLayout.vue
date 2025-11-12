@@ -61,7 +61,7 @@
         <NavButton
           label="채팅 문의"
           icon="icon_circle.png"
-          :to="`/organizations/${route.params.organizationId}/chat`"
+          :to="{ name: 'ChatRoomList', params: { organizationId: route.params.organizationId } }"
         />
       </template>
     </SideBar>

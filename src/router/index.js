@@ -66,10 +66,6 @@ const routes = [
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
 
-  // 채팅 (복수형 - 먼저 정의)
-  { path: "/organizations/:organizationId/chat", component: ChatRoomListView, meta: { requiresAuth: true } },
-  { path: "/organizations/:organizationId/chat/:roomId", component: ChatView, meta: { requiresAuth: true } },
-
   // 조직 내부 라우트
   {
     path: "/organization/:organizationId",
@@ -81,6 +77,8 @@ const routes = [
       { path: "my-reservations", name: "MyReservationPage", component: MyReservationView },
       { path: "notices", name: "NoticePage", component: NoticeView },
       { path: "dashboard", name: "OrganizationDashboardExternal", component: DashboardMain },
+      { path: "chat", name: "ChatRoomList", component: ChatRoomListView },
+      { path: "chat/:roomId", name: "ChatRoom", component: ChatView },
       {
         path: "admin/reservations",
         name: "AdminReservationManage",

@@ -1,21 +1,6 @@
 <template>
   <div class="chat-room-list-view">
-    <!-- 사이드바 (왼쪽) -->
-    <SideBar
-      :organization-name="organizationName"
-      :user-name="userName"
-      admin-menu-title="관리자메뉴"
-    >
-      <template #main-menu>
-        <!-- 일반 메뉴 슬롯 -->
-      </template>
-
-      <template #admin-menu>
-        <!-- 관리자 메뉴 슬롯 -->
-      </template>
-    </SideBar>
-
-    <!-- 채팅방 목록 (중간) -->
+    <!-- 채팅방 목록 (왼쪽) -->
     <div class="chat-list-container">
       <div class="chat-list-header">
         <h2 class="page-title">{{ selectedRoom ? (selectedRoom.assignedToName || '미배정') : '채팅 문의' }}</h2>
@@ -27,8 +12,8 @@
       <div class="divider"></div>
 
       <div class="filter-tabs">
-        <button class="filter-tab active">반별 톡</button>
-        <button class="filter-tab">홈로드</button>
+        <button class="filter-tab active">내 담당 채팅</button>
+        <button class="filter-tab">미배정 채팅</button>
       </div>
 
       <div class="search-bar">
@@ -86,13 +71,6 @@
               <span class="participant-info">{{ selectedRoom.createdByEmail }}</span>
             </div>
           </div>
-
-          <div class="header-actions">
-            <div class="header-tabs">
-              <button class="tab-button active">반별 톡</button>
-              <button class="tab-button">홈로드</button>
-            </div>
-          </div>
         </div>
 
         <div class="divider"></div>
@@ -121,7 +99,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import SideBar from '../components/common/SideBar.vue'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
@@ -135,8 +112,6 @@ const organizationId = ref(parseInt(route.params.organizationId) || 1)
 // 사용자 정보
 const currentUserEmail = ref(localStorage.getItem('email') || '')
 const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
-const userName = ref(currentUserEmail.value)
-const organizationName = ref('조직명') // 하드코딩(임시)
 const isAdmin = ref(false) // 하드코딩(임시) 관리자 여부 - API에서 가져와야 함
 
 // 채팅방 목록
@@ -253,11 +228,11 @@ onMounted(() => {
 .chat-room-list-view {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background-color: #f8f9fb;
 }
 
-/* 채팅방 목록 (중간) */
+/* 채팅방 목록 (왼쪽) */
 .chat-list-container {
   width: 400px;
   display: flex;
@@ -407,38 +382,6 @@ onMounted(() => {
   color: #666;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-tabs {
-  display: flex;
-  gap: 8px;
-}
-
-.tab-button {
-  padding: 8px 20px;
-  border: none;
-  background-color: transparent;
-  color: #666;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: 20px;
-  transition: all 0.2s;
-}
-
-.tab-button.active {
-  background-color: #0c1c54;
-  color: white;
-}
-
-.tab-button:not(.active):hover {
-  background-color: #f0f0f0;
-}
 
 .status-message {
   flex: 1;
