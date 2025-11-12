@@ -3,20 +3,6 @@ import { createRouter, createWebHistory } from "vue-router";
 
 // --- 인증 / 권한 관련 ---
 import { isAuthenticated } from "@/utils/auth";
-
-import CommonTestView from "@/views/test/CommonTestView.vue";
-import SidebarTestView from '@/views/test/SidebarTestView.vue'
-import ModalTestView from "@/views/test/ModalTestView.vue";
-import OrganizationListTestView from "@/views/test/OrganizationListTestView.vue";
-
-import AdminRoomPage from '@/views/room/AdminRoomPage.vue';
-import AdminReservationPage from '@/views/adminreservation/AdminReservationPage.vue';
-import userhome from '@/views/test/userhome.vue';
-import ReservationPage from '@/views/reservation/ReservationPage.vue';
-import RoomDetail from '@/views/reservation/RoomDetail.vue';
-import OrganizationDashboard from '@/views/dashboard/OrganizationDashboard.vue';
-import AdminRoomDetail from '@/views/room/AdminRoomDetail.vue';
-
 import { organizationRole, fetchOrganizationInfo } from "@/composables/useOrganization.js";
 
 // --- 공용 뷰 ---
@@ -118,13 +104,13 @@ const routes = [
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms",
-        name: "AdminRoomManage",
-        component: RoomManage,
+        path: "admin/rooms",              // ✅ 회의실 목록 (사이드바 유지)
+        name: "AdminRoomList",
+        component: AdminRoomPage,         // 기존 AdminRoomPage 그대로 사용
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms/:roomId",
+        path: "admin/rooms/:roomId",      // ✅ 회의실 상세 (사이드바 유지)
         name: "AdminRoomDetail",
         component: AdminRoomDetail,
         meta: { requiresAdmin: true },
