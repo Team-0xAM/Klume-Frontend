@@ -222,6 +222,10 @@ async function fetchAvailableTimes() {
         repeatStart: t.repeatStartDay,
         repeatEnd: t.repeatEndDay,
         }))
+        availableTimes.value.sort((a, b) => {
+            const toMs = v => (v ? new Date(v).getTime() : Infinity)
+            return toMs(a.repeatStart) - toMs(b.repeatStart)
+    })
     } catch (err) {
         console.error("이용 가능 시간 조회 실패:", err)
     }
