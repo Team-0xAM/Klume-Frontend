@@ -42,6 +42,10 @@ const messageContainer = ref(null)
 
 // 내 메시지인지 확인
 const isMyMessage = (message) => {
+  console.log('=== isMyMessage 체크 ===')
+  console.log('message.senderId:', message.senderId)
+  console.log('props.currentUserId:', props.currentUserId)
+  console.log('일치 여부:', message.senderId === props.currentUserId)
   return message.senderId === props.currentUserId
 }
 

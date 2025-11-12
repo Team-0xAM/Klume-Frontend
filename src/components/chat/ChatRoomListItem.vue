@@ -68,6 +68,11 @@ const userInitial = computed(() => {
 })
 
 const lastMessage = computed(() => {
+  if (props.chatRoom.lastMessageContent) {
+    // 메시지가 너무 길면 자르기 (30자 제한)
+    const content = props.chatRoom.lastMessageContent
+    return content.length > 30 ? content.substring(0, 30) + '...' : content
+  }
   return '메시지 없음'
 })
 

@@ -125,10 +125,37 @@ const route = useRoute()
 // 조직 ID (라우트에서 가져오기)
 const organizationId = ref(parseInt(route.params.organizationId) || 1)
 
+// JWT 토큰에서 이메일 추출하는 함수
+const getEmailFromToken = () => {
+  try {
+    const token = localStorage.getItem('accessToken')
+    if (!token) return ''
+
+    // JWT 토큰의 payload 부분 디코딩
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    }).join(''))
+
+    const payload = JSON.parse(jsonPayload)
+    return payload.sub || payload.email || ''
+  } catch (error) {
+    console.error('JWT 파싱 에러:', error)
+    return ''
+  }
+}
+
 // 사용자 정보
-const currentUserEmail = ref(localStorage.getItem('email') || '')
+const currentUserEmail = ref(localStorage.getItem('email') || getEmailFromToken())
 const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
 const isAdmin = computed(() => organizationRole.value === 'ADMIN') // 역할에서 관리자 여부 확인
+
+// 디버깅: currentUserEmail 확인
+console.log('=== ChatRoomListView 초기화 ===')
+console.log('localStorage.email:', localStorage.getItem('email'))
+console.log('localStorage.accessToken:', localStorage.getItem('accessToken') ? '있음' : '없음')
+console.log('currentUserEmail:', currentUserEmail.value)
 
 // 채팅방 목록
 const chatRooms = ref([])
@@ -171,6 +198,7 @@ const loadChatRooms = async () => {
 
   try {
     const response = await getChatRooms(organizationId.value)
+    console.log('=== 채팅방 목록 응답 ===', response.data)
     chatRooms.value = response.data || []
   } catch (error) {
     console.error('Failed to load chat rooms:', error)
@@ -199,8 +227,18 @@ const selectChatRoom = (room) => {
   chatInstance = useChat(organizationId.value, room.roomId, isAdmin.value)
 
   // watch를 사용해서 chatInstance의 ref들을 동기화
-  watch(() => chatInstance.messages.value, (newMessages) => {
+  watch(() => chatInstance.messages.value, (newMessages, oldMessages) => {
     messages.value = newMessages
+
+    // 새 메시지가 추가되었을 때 채팅방 목록 업데이트
+    if (newMessages.length > 0 && (!oldMessages || newMessages.length > oldMessages.length)) {
+      const lastMessage = newMessages[newMessages.length - 1]
+      const roomIndex = chatRooms.value.findIndex(r => r.roomId === room.roomId)
+      if (roomIndex !== -1) {
+        chatRooms.value[roomIndex].lastMessageContent = lastMessage.content
+        chatRooms.value[roomIndex].lastMessageAt = lastMessage.createdAt
+      }
+    }
   }, { deep: true, immediate: true })
 
   watch(() => chatInstance.isConnected.value, (newValue) => {
@@ -225,6 +263,15 @@ const selectChatRoom = (room) => {
 const handleSendMessage = (content) => {
   if (chatInstance) {
     chatInstance.sendMessage(content)
+
+    // 채팅방 목록의 마지막 메시지 즉시 업데이트
+    if (selectedRoom.value) {
+      const roomIndex = chatRooms.value.findIndex(r => r.roomId === selectedRoom.value.roomId)
+      if (roomIndex !== -1) {
+        chatRooms.value[roomIndex].lastMessageContent = content
+        chatRooms.value[roomIndex].lastMessageAt = new Date().toISOString()
+      }
+    }
   }
 }
 
