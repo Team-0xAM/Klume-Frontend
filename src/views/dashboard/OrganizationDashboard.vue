@@ -37,13 +37,17 @@
 
     <!-- 공지사항 -->
     <section class="notice-section">
-      <h3>📢 공지사항</h3>
-      <ul>
-        <li v-for="n in notices" :key="n.id">
-          <a href="#" @click.prevent="goNotice(n.id)">{{ n.title }}</a>
+      <div class="section-header">
+        <h3>📢 공지사항</h3>
+        <button class="more-btn" @click="goNoticeList">더보기</button>
+      </div>
+      <ul v-if="notices.length">
+        <li v-for="n in notices" :key="n.id" class="notice-item" @click="goNoticeDetail(n.id)">
+          <span class="notice-title">{{ n.title }}</span>
           <span class="date">{{ n.date }}</span>
         </li>
       </ul>
+      <p v-else class="empty-message">등록된 공지사항이 없습니다.</p>
     </section>
 
     <!-- 내 최근 예약 -->
@@ -145,8 +149,23 @@ async function loadDashboardData() {
   }
 }
 
-function goNotice(id) {
-  router.push(`/organization/${organizationId.value}/notice/${id}`)
+// 공지사항 상세 페이지로 이동
+function goNoticeDetail(noticeId) {
+  router.push({
+    name: 'NoticeDetail',
+    params: {
+      organizationId: organizationId.value,
+      noticeId: noticeId
+    }
+  })
+}
+
+// 공지사항 목록 페이지로 이동
+function goNoticeList() {
+  router.push({
+    name: 'NoticePage',
+    params: { organizationId: organizationId.value }
+  })
 }
 </script>
 
@@ -186,6 +205,29 @@ function goNotice(id) {
 
 section {
   margin-bottom: 35px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.more-btn {
+  background: none;
+  border: none;
+  color: #0c1c54;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.more-btn:hover {
+  background-color: #f0f0f0;
 }
 
 .reservations {
@@ -229,17 +271,31 @@ section {
   display: flex;
   justify-content: space-between;
   border-bottom: 1px solid #eee;
-  padding: 8px 0;
+  padding: 12px 8px;
   font-size: 15px;
 }
 
-.notice-section a {
-  color: #001f5c;
-  text-decoration: none;
+.notice-item {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-radius: 6px;
+  padding: 12px;
 }
 
-.notice-section a:hover {
-  text-decoration: underline;
+.notice-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notice-title {
+  color: #001f5c;
+  font-weight: 500;
+}
+
+.empty-message {
+  color: #999;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px 0;
 }
 
 .notice-section .date {

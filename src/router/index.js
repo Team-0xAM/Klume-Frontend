@@ -14,6 +14,7 @@ import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 // --- 조직 관련 뷰 ---
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationCreateView from "@/views/OrganizationCreateView.vue";
+import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 import OrganizationJoinWithCodeView from "@/views/OrganizationJoinWithCodeView.vue";
 import OrganizationMemberHomeView from "@/views/OrganizationMemberHomeView.vue"; // ✅ 너의 브랜치 추가
 
@@ -24,7 +25,6 @@ import NoticeAdminPageView from "@/views/NoticeAdminPageView.vue";
 
 // --- 레이아웃 및 관리자 뷰 ---
 import OrganizationLayout from "@/components/layout/OrganizationLayout.vue";
-import OrganizationDashboard from "@/views/organization/OrganizationDashboard.vue";
 import MyReservationView from "@/views/organization/MyReservationView.vue";
 import NoticeView from "@/views/organization/NoticeView.vue";
 import RoomManage from "@/views/organization/admin/RoomManage.vue";
@@ -35,7 +35,6 @@ import OrganizationManageView from "@/views/organization/admin/OrganizationManag
 import MeetingRoomList from "@/components/room/MeetingRoomList.vue";
 import AdminRoomPage from "@/views/room/AdminRoomPage.vue";
 import AdminRoomDetail from "@/views/room/AdminRoomDetail.vue";
-import AdminReservationPage from "@/views/adminreservation/AdminReservationPage.vue";
 import ReservationPage from "@/views/reservation/ReservationPage.vue";
 import RoomDetail from "@/views/reservation/RoomDetail.vue";
 
@@ -62,28 +61,12 @@ const routes = [
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
 
-  /* 관리자메뉴 예약관리 페이지 */
-  { path: "/adminreservation", component: AdminReservationPage },
-
-  /* 관리자메뉴 회의실 관리페이지 */
-  {
-    path: "/organization/:organizationId/admin/rooms",
-    name: "AdminRoomList",
-    component: AdminRoomPage,
-    meta: { requiresAdmin: true },
-  },
-  {
-    path: "/organization/:organizationId/admin/rooms/:roomId",
-    name: "AdminRoomDetail",
-    component: AdminRoomDetail,
-    meta: { requiresAdmin: true },
-  },
-
   /* 피그마용 삭제예정 */
   { path: "/userhome", component: userhome },
 
   // 조직 관련
   { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
+  { path: "/organization/new", component: OrganizationJoinView, meta: { requiresAuth: true } },
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
 
@@ -101,10 +84,11 @@ const routes = [
     component: OrganizationLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: "", name: "OrganizationDashboard", component: OrganizationDashboard },
+      { path: "", name: "OrganizationDashboard", component: OrganizationMemberHomeView },
       { path: "reserve", name: "ReservationPage", component: ReservationPage },
       { path: "my-reservations", name: "MyReservationPage", component: MyReservationView },
       { path: "notices", name: "NoticePage", component: NoticeView },
+      { path: "notices/:noticeId", name: "NoticeDetail", component: NoticeView },
       { path: "dashboard", name: "OrganizationDashboardExternal", component: DashboardMain },
       {
         path: "admin/reservations",

@@ -4,7 +4,7 @@
         <section class="section today">
             <div class="section-header">
                 <h3>오늘 내 예약</h3>
-                <button class="text-btn">더보기</button>
+                <button class="text-btn" @click="goToMyReservations">더보기</button>
             </div>
 
             <div v-if="myReservations.length" class="reservation-list">
@@ -76,22 +76,29 @@
         <section class="section">
             <div class="section-header">
                 <h3>회의실 공지사항</h3>
-                <button class="text-btn">공지 더보기</button>
+                <button class="text-btn" @click="goToNotices">공지 더보기</button>
             </div>
 
-            <ul class="notice-list">
-                <li v-for="(item, i) in notices" :key="i" class="notice-item">
+            <ul class="notice-list" v-if="notices.length">
+                <li v-for="(item, i) in notices" :key="i" class="notice-item" @click="goToNoticeDetail(item.id)">
                     <span class="notice-title">{{ item.title }}</span>
                     <span class="notice-date">{{ item.date }}</span>
                 </li>
             </ul>
+            <p v-else class="empty-text">등록된 공지사항이 없습니다</p>
         </section>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import axios from "axios";
+import { useRoute, useRouter } from 'vue-router'
+import api from '@/api/axios'
+import { getNotices } from '@/api/notice'
+
+const route = useRoute()
+const router = useRouter()
+const organizationId = ref(Number(route.params.organizationId))
 
 // 회의실 선택
 const selectedRoom = ref("");
@@ -107,11 +114,11 @@ const filteredOpenSlots = computed(() =>
     )
 );
 
-// API 호출
+// 회의실별 예약 가능 시간 API 호출
 const fetchDailyAvailableTimes = async () => {
     try {
-        const res = await axios.get(
-            "/api/organizations/1/daily-available-times"
+        const res = await api.get(
+            `/organizations/${organizationId.value}/daily-available-times`
         );
         dailyAvailableTimes.value = res.data;
 
@@ -120,6 +127,8 @@ const fetchDailyAvailableTimes = async () => {
         selectedRoom.value = roomOptions.value[0] || "";
     } catch (err) {
         console.error("예약 가능 시간 조회 실패:", err);
+        dailyAvailableTimes.value = []
+        roomOptions.value = []
     }
 };
 
@@ -138,31 +147,76 @@ const isUpcoming = (dateStr) => {
     return open >= today;
 };
 
-// 오늘 내 예약 (더미 데이터)
-const myReservations = ref([
-    {
-        room: "3층 회의실",
-        time: "13:00 ~ 14:00",
-        status: "예약완료",
-        date: "2025.11.08",
-    },
-    {
-        room: "5층 테이블3",
-        time: "18:00 ~ 20:00",
-        status: "예약완료",
-        date: "2025.11.07",
-    },
-]);
+// 오늘 내 예약
+const myReservations = ref([]);
 
-// 공지사항 (더미 데이터)
-const notices = ref([
-    { title: "[공지] 4층 회의실 사용 제한 안내", date: "2025.11.08" },
-    { title: "[점검] 11/10 00:00~02:00 시스템 점검 안내", date: "2025.11.06" },
-    { title: "[신규] 반복 예약 기간 설정 기능 추가", date: "2025.10.30" },
-]);
+// 오늘 내 예약 조회
+const fetchMyTodayReservations = async () => {
+    try {
+        const res = await api.get(`/organizations/${organizationId.value}/reservations/my/today`)
+        const data = Array.isArray(res.data) ? res.data : []
+        myReservations.value = data.map(item => ({
+            room: item.roomName || '회의실',
+            time: `${item.startTime || ''} ~ ${item.endTime || ''}`,
+            status: item.status === 'CONFIRMED' ? '예약완료' : '대기중',
+            date: item.date ? new Date(item.date).toLocaleDateString('ko-KR') : ''
+        }))
+    } catch (err) {
+        console.error('오늘 내 예약 조회 실패:', err)
+        myReservations.value = []
+    }
+}
 
-onMounted(() => {
-    fetchDailyAvailableTimes();
+// 공지사항
+const notices = ref([]);
+
+// 공지사항 조회 (최근 3개)
+const fetchNotices = async () => {
+    try {
+        const res = await getNotices(organizationId.value)
+        const data = Array.isArray(res.data) ? res.data : []
+        notices.value = data.slice(0, 3).map(notice => ({
+            id: notice.noticeId || notice.id,
+            title: notice.title,
+            date: notice.createdAt ? new Date(notice.createdAt).toLocaleDateString('ko-KR') : ''
+        }))
+    } catch (err) {
+        console.error('공지사항 조회 실패:', err)
+        notices.value = []
+    }
+}
+
+// 내 예약 페이지로 이동
+const goToMyReservations = () => {
+    router.push({
+        name: 'MyReservationPage',
+        params: { organizationId: organizationId.value }
+    })
+}
+
+// 공지사항 목록 페이지로 이동
+const goToNotices = () => {
+    router.push({
+        name: 'NoticePage',
+        params: { organizationId: organizationId.value }
+    })
+}
+
+// 공지사항 상세 페이지로 이동
+const goToNoticeDetail = (noticeId) => {
+    router.push({
+        name: 'NoticeDetail',
+        params: {
+            organizationId: organizationId.value,
+            noticeId: noticeId
+        }
+    })
+}
+
+onMounted(async () => {
+    await fetchDailyAvailableTimes();
+    await fetchMyTodayReservations();
+    await fetchNotices();
 });
 </script>
 
@@ -320,16 +374,24 @@ h3 {
 .notice-item {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 10px 8px;
     border-top: 1px solid #eee;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
 }
 
 .notice-item:first-child {
     border-top: none;
 }
 
+.notice-item:hover {
+    background-color: #f8f9fa;
+}
+
 .notice-title {
     color: #333;
+    font-weight: 500;
 }
 
 .notice-date {

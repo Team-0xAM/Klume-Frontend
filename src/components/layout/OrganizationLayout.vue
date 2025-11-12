@@ -46,7 +46,7 @@
         <NavButton
           label="회의실 관리"
           icon="icon_navigation.png"
-          :to="{ name: 'AdminRoomList', params: { organizationId: route.params.organizationId } }"
+          :to="{ name: 'AdminRoomListNested', params: { organizationId: route.params.organizationId } }"
         />
         <NavButton
           label="조직 관리"
