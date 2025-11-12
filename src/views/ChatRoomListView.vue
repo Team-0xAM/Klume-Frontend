@@ -42,8 +42,8 @@
       </div>
 
       <!-- 에러 상태 -->
-      <div v-else-if="errorMessage" class="status-message error">
-        <p>{{ errorMessage }}</p>
+      <div v-else-if="roomListErrorMessage" class="status-message error">
+        <p>{{ roomListErrorMessage }}</p>
         <button @click="loadChatRooms" class="retry-button">다시 시도</button>
       </div>
 
@@ -103,10 +103,6 @@
 
         <!-- 채팅 메시지 영역 -->
         <div v-else class="chat-content">
-          <!-- 디버그: 메시지 개수 확인 -->
-          <div style="background: yellow; padding: 10px;">
-            메시지 개수: {{ messages?.length || 0 }} | 연결 상태: {{ isConnected }}
-          </div>
           <ChatMessageList :messages="messages || []" :current-user-id="currentUserEmail" />
           <ChatInput @send="handleSendMessage" :disabled="!isConnected" />
         </div>
@@ -136,7 +132,7 @@ const isAdmin = ref(true) // 관리자 여부 - 임시로 true 설정
 // 채팅방 목록
 const chatRooms = ref([])
 const isLoading = ref(false)
-const errorMessage = ref('')
+const roomListErrorMessage = ref('')
 const showOnlyMyChats = ref(false)
 
 // 선택된 채팅방
@@ -162,14 +158,14 @@ let chatInstance = null
 // 채팅방 목록 로드
 const loadChatRooms = async () => {
   isLoading.value = true
-  errorMessage.value = ''
+  roomListErrorMessage.value = ''
 
   try {
     const response = await getChatRooms(organizationId.value)
     chatRooms.value = response.data || []
   } catch (error) {
     console.error('Failed to load chat rooms:', error)
-    errorMessage.value = '채팅방 목록을 불러오는데 실패했습니다.'
+    roomListErrorMessage.value = '채팅방 목록을 불러오는데 실패했습니다.'
   } finally {
     isLoading.value = false
   }
