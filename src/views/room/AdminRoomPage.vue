@@ -1,6 +1,5 @@
 <template>
   <div class="admin-page">
-    <Sidebar />
     <MeetingRoomList :organization-id="organizationId" />
   </div>
 </template>
@@ -28,8 +27,6 @@ function onAddRoom() {
 
 <style scoped>
 .admin-page {
-  display: flex;
-  background-color: #f5f6fa;
-  min-height: 100vh;
+  width: 100%;
 }
 </style>
