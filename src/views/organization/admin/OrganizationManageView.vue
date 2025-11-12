@@ -21,6 +21,7 @@
 
     <transition name="fade" mode="out-in">
       <component :is="currentTabComponent" class="tab-content" :organization-id="organizationId" />
+    </transition>
 
     <!-- 초대 코드 모달 -->
     <div v-if="showInviteModal" class="modal-overlay" @click="closeInviteModal">
