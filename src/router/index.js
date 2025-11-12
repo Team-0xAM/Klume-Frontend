@@ -14,7 +14,9 @@ import OAuthCallbackView from "@/views/OAuthCallbackView.vue";
 // --- 조직 관련 뷰 ---
 import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationCreateView from "@/views/OrganizationCreateView.vue";
+import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 import OrganizationJoinWithCodeView from "@/views/OrganizationJoinWithCodeView.vue";
+import OrganizationMemberHomeView from "@/views/OrganizationMemberHomeView.vue"; // ✅ 너의 브랜치 추가
 
 // --- 채팅 및 공지 ---
 import ChatRoomListView from "@/views/ChatRoomListView.vue";
@@ -23,7 +25,6 @@ import NoticeAdminPageView from "@/views/NoticeAdminPageView.vue";
 
 // --- 레이아웃 및 관리자 뷰 ---
 import OrganizationLayout from "@/components/layout/OrganizationLayout.vue";
-import OrganizationDashboard from "@/views/organization/OrganizationDashboard.vue";
 import MyReservationView from "@/views/organization/MyReservationView.vue";
 import NoticeView from "@/views/organization/NoticeView.vue";
 import RoomManage from "@/views/organization/admin/RoomManage.vue";
@@ -34,7 +35,6 @@ import OrganizationManageView from "@/views/organization/admin/OrganizationManag
 import MeetingRoomList from "@/components/room/MeetingRoomList.vue";
 import AdminRoomPage from "@/views/room/AdminRoomPage.vue";
 import AdminRoomDetail from "@/views/room/AdminRoomDetail.vue";
-import AdminReservationPage from "@/views/adminreservation/AdminReservationPage.vue";
 import ReservationPage from "@/views/reservation/ReservationPage.vue";
 import RoomDetail from "@/views/reservation/RoomDetail.vue";
 
@@ -61,30 +61,22 @@ const routes = [
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
 
-    /* 관리자메뉴 예약관리 페이지 */
-    {path: '/adminreservation', component: AdminReservationPage},
-
-    /* 관리자메뉴 회의실 관리페이지 */
-    {
-      path: '/organization/:organizationId/admin/rooms',
-      name: 'AdminRoomList',
-      component: AdminRoomPage,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: "/organization/:organizationId/admin/rooms/:roomId",
-      name: "AdminRoomDetail",
-      component: AdminRoomDetail,
-      meta: { requiresAdmin: true },
-    },
-
-    /* 피그마용 삭제예정 */
-    {path: '/userhome', component: userhome},
+  /* 피그마용 삭제예정 */
+  { path: "/userhome", component: userhome },
 
   // 조직 관련
   { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
+  { path: "/organization/new", component: OrganizationJoinView, meta: { requiresAuth: true } },
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
+
+  // ✅ 사용자 홈 라우트 추가
+  {
+    path: "/organization/:organizationId/home",
+    name: "OrganizationMemberHome",
+    component: OrganizationMemberHomeView,
+    meta: { requiresAuth: true },
+  },
 
   // 조직 내부 라우트
   {
@@ -92,10 +84,11 @@ const routes = [
     component: OrganizationLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: "", name: "OrganizationDashboard", component: OrganizationDashboard },
+      { path: "", name: "OrganizationDashboard", component: OrganizationMemberHomeView },
       { path: "reserve", name: "ReservationPage", component: ReservationPage },
       { path: "my-reservations", name: "MyReservationPage", component: MyReservationView },
       { path: "notices", name: "NoticePage", component: NoticeView },
+      { path: "notices/:noticeId", name: "NoticeDetail", component: NoticeView },
       { path: "dashboard", name: "OrganizationDashboardExternal", component: DashboardMain },
       { path: "chat", name: "ChatRoomList", component: ChatRoomListView },
       { path: "chat/:roomId", name: "ChatRoom", component: ChatView },
@@ -106,14 +99,14 @@ const routes = [
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms",              // ✅ 회의실 목록 (사이드바 유지)
-        name: "AdminRoomList",
-        component: AdminRoomPage,         // 기존 AdminRoomPage 그대로 사용
+        path: "admin/rooms",
+        name: "AdminRoomListNested",
+        component: AdminRoomPage,
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms/:roomId",      // ✅ 회의실 상세 (사이드바 유지)
-        name: "AdminRoomDetail",
+        path: "admin/rooms/:roomId",
+        name: "AdminRoomDetailNested",
         component: AdminRoomDetail,
         meta: { requiresAdmin: true },
       },
@@ -138,14 +131,13 @@ const routes = [
     ],
   },
 
-  // 채팅방 상세 (복수형 organizations 유지 - 별도 페이지)
+  // 채팅방 상세 (복수형 organizations 유지)
   { path: "/organizations/:organizationId/chat/:roomId", component: ChatView, meta: { requiresAuth: true } },
 
   // 회의실 / 예약 관련
   { path: "/roomlist", component: MeetingRoomList },
   { path: "/adminroomlist", component: AdminRoomPage },
   { path: "/adminroomdetail", component: AdminRoomDetail },
-  { path: "/adminreservation", component: AdminReservationPage },
   { path: "/reservation", component: ReservationPage },
   { path: "/reservation/:roomId", component: RoomDetail },
 
@@ -153,16 +145,13 @@ const routes = [
   { path: "/dashboard", component: DashboardMain },
 
   // 테스트
-  { path: "/userhome", component: userhome },
   { path: "/test/common", component: CommonTestView },
   { path: "/test/sidebar", component: SidebarTestView },
   { path: "/test/modal", component: ModalTestView },
   { path: "/test/orgcard", component: OrganizationListTestView },
 
-
   // 예외
   { path: "/403", name: "Forbidden", component: ForbiddenView },
-
 ];
 
 
@@ -177,17 +166,14 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authenticated = isAuthenticated();
 
-  // 로그인 필요한 페이지 접근 시
   if (to.meta.requiresAuth && !authenticated) {
     return next("/auth/login");
   }
 
-  // 로그인 상태에서 비로그인 페이지 접근 방지
   if (to.meta.requiresGuest && authenticated) {
     return next("/home");
   }
 
-  // 관리자 전용 접근 제어
   if (to.meta.requiresAdmin) {
     if (!organizationRole.value && to.params.organizationId) {
       await fetchOrganizationInfo(to.params.organizationId);
