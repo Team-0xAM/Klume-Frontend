@@ -63,6 +63,12 @@
       </tbody>
     </table>
   </div>
+  <div v-if="showPhotoModal" class="modal-overlay" @click.self="closePhotoModal">
+      <div class="modal-content">
+        <button class="close-btn" @click="closePhotoModal">✕</button>
+        <img :src="imageUrl" alt="이용 사진" />
+      </div>
+    </div>
 </template>
 
 <script setup>
@@ -73,6 +79,9 @@ import { useRoute } from 'vue-router'
 const tabs = ["전체", "오늘", "예정", "지난"];
 const selectedTab = ref("전체");
 const reservations = ref([]);
+const showPhotoModal = ref(false);
+const imageUrl = ref(""); 
+
 
 const route = useRoute()
 const organizationId = Number(route.params.organizationId)
@@ -145,7 +154,6 @@ function getButtonText(r) {
 
 async function handleAction(item) {
   const action = getButtonText(item);
-  console.log(item.reservationId);
   if (action === "예약 취소") {
     const confirmCancel = confirm("정말 예약을 취소하시겠습니까?");
     if (!confirmCancel) return;
@@ -169,8 +177,25 @@ async function handleAction(item) {
   }
 
   if (action === "이용 사진 보기") {
-    alert(`${item.roomName}의 이용 사진을 확인합니다.`);
+    try {
+      const res = await api.get(
+        `/organizations/${organizationId}/reservations/${item.reservationId}/photo`,
+        { withCredentials: true }
+      );
+
+      imageUrl.value = res.data; 
+      showPhotoModal.value = true;
+
+    } catch (err) {
+      console.error("이용 사진 가져오기 실패:", err);
+      alert("이용사진을 가져오는데 실패하였습니다.");
+    }
   }
+}
+
+function closePhotoModal() {
+  showPhotoModal.value = false;
+  imageUrl.value = "";
 }
 
 function compareDateOnly(a, b) {
@@ -315,4 +340,45 @@ const filteredReservations = computed(() => {
   background: white;
   color: #0c1c54;
 }
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  border-radius: 12px;
+  max-width: 90%;
+  max-height: 90%;
+  padding: 50px 20px 20px 20px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+}
+
+.modal-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;     
+  right: 10px;   
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 10;   
+}
+
+
 </style>
