@@ -6,8 +6,13 @@
 </template>
 
 <script setup>
-import MeetingRoomList from '@/components/room/MeetingRoomList.vue';
+import MeetingRoomList from '@/components/room/MeetingRoomList.vue'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+const organizationId = ref(Number(route.params.organizationId))
 
 function onAddRoom() {
   const nextId = rooms.value.length + 1
@@ -19,8 +24,6 @@ function onAddRoom() {
     availableTime: 0,
   })
 }
-
-const organizationId = ref(1)
 </script>
 
 <style scoped>
