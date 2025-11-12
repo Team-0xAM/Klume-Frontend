@@ -171,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import SideBar from '../components/common/SideBar.vue'
 import NavButton from '../components/common/NavButton.vue'
@@ -302,6 +302,14 @@ onMounted(async () => {
   await fetchOrganizationInfo(organizationId.value)
   // 채팅방 목록 로드
   loadChatRooms()
+})
+
+// 컴포넌트 언마운트 시 WebSocket 연결 정리
+onUnmounted(() => {
+  if (chatInstance) {
+    chatInstance.disconnect()
+    chatInstance = null
+  }
 })
 </script>
 

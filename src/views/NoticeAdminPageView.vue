@@ -31,7 +31,7 @@
         <NavButton
           label="조직 대시보드로 가기"
           icon="icon_grid.png"
-          :to="`/organization/${organizationId}/dashboard`"
+          :to="'/organization'"
         />
       </template>
 
