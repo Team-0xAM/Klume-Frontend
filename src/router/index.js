@@ -37,6 +37,7 @@ import AdminRoomPage from "@/views/room/AdminRoomPage.vue";
 import AdminRoomDetail from "@/views/room/AdminRoomDetail.vue";
 import ReservationPage from "@/views/reservation/ReservationPage.vue";
 import RoomDetail from "@/views/reservation/RoomDetail.vue";
+import AdminReservationPage from "@/views/adminreservation/AdminReservationPage.vue";
 
 // --- 대시보드 (조직 외부용) ---
 import DashboardMain from "@/views/dashboard/OrganizationDashboard.vue";
