@@ -51,7 +51,6 @@ import userhome from "@/views/test/userhome.vue";
 // --- 에러 / 예외 뷰 ---
 import ForbiddenView from "@/views/error/ForbiddenView.vue";
 
-
 // --- Routes 설정 ---
 const routes = [
   // 공용
@@ -160,13 +159,11 @@ const routes = [
   { path: "/403", name: "Forbidden", component: ForbiddenView },
 ];
 
-
 // --- Router 생성 ---
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
-
 
 // --- 라우터 가드 ---
 router.beforeEach(async (to, from, next) => {
