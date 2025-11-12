@@ -103,7 +103,8 @@ import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
-import { fetchOrganizationInfo, organizationRole } from '@/composables/useOrganization.js'
+import { organizationRole } from '@/composables/useOrganization.js'
+import api from '../api/axios'
 
 const route = useRoute()
 
@@ -160,6 +161,10 @@ const loadChatRooms = async () => {
 // 채팅방 선택
 const selectChatRoom = (room) => {
   console.log('=== 채팅방 선택 ===', room)
+  console.log('현재 사용자 OrganizationMember ID:', currentUserId.value)
+  console.log('채팅방 assignedToId:', room.assignedToId)
+  console.log('isAdmin:', isAdmin.value)
+
   selectedRoomId.value = room.roomId
   selectedRoom.value = room
 
@@ -233,8 +238,20 @@ const handleUnassign = async (roomId) => {
   }
 }
 
+// 현재 사용자의 OrganizationMember ID 가져오기
+const loadCurrentUserId = async () => {
+  try {
+    const response = await api.get(`/organizations/${organizationId.value}/members/me`)
+    currentUserId.value = response.data.organizationMemberId
+    console.log('현재 사용자 OrganizationMember ID:', currentUserId.value)
+  } catch (error) {
+    console.error('Failed to load current user ID:', error)
+  }
+}
+
 // 컴포넌트 마운트 시 목록 로드
-onMounted(() => {
+onMounted(async () => {
+  await loadCurrentUserId()
   loadChatRooms()
 })
 

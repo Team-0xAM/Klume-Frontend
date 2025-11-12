@@ -134,7 +134,9 @@ export const useChat = (organizationId, roomId, isAdmin) => {
     errorMessage.value = ''
 
     const onMessageReceived = (message) => {
+      console.log('=== onMessageReceived 콜백 실행 ===', message)
       messages.value.push(message)
+      console.log('=== messages 배열에 추가 완료 ===', messages.value.length)
     }
 
     const onConnected = () => {
