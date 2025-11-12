@@ -61,6 +61,26 @@ const routes = [
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
 
+    /* 관리자메뉴 예약관리 페이지 */
+    {path: '/adminreservation', component: AdminReservationPage},
+
+    /* 관리자메뉴 회의실 관리페이지 */
+    {
+      path: '/organization/:organizationId/admin/rooms',
+      name: 'AdminRoomList',
+      component: AdminRoomPage,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: "/organization/:organizationId/admin/rooms/:roomId",
+      name: "AdminRoomDetail",
+      component: AdminRoomDetail,
+      meta: { requiresAdmin: true },
+    },
+
+    /* 피그마용 삭제예정 */
+    {path: '/userhome', component: userhome},
+
   // 조직 관련
   { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
@@ -86,13 +106,13 @@ const routes = [
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms",
-        name: "AdminRoomManage",
-        component: RoomManage,
+        path: "admin/rooms",              // ✅ 회의실 목록 (사이드바 유지)
+        name: "AdminRoomList",
+        component: AdminRoomPage,         // 기존 AdminRoomPage 그대로 사용
         meta: { requiresAdmin: true },
       },
       {
-        path: "admin/rooms/:roomId",
+        path: "admin/rooms/:roomId",      // ✅ 회의실 상세 (사이드바 유지)
         name: "AdminRoomDetail",
         component: AdminRoomDetail,
         meta: { requiresAdmin: true },
@@ -139,8 +159,10 @@ const routes = [
   { path: "/test/modal", component: ModalTestView },
   { path: "/test/orgcard", component: OrganizationListTestView },
 
+
   // 예외
   { path: "/403", name: "Forbidden", component: ForbiddenView },
+
 ];
 
 

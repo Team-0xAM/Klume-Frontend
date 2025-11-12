@@ -11,7 +11,10 @@
         <div class="info">
             <div class="info-header">
                 <h3>{{ room.name }}</h3>
+                <div class="btn-group">
                 <button class="edit-btn" @click="showRoomEditModal  = true">수정하기</button>
+                <button class="delete-btn" @click="deleteRoomConfirm">삭제</button>
+                </div>
             </div>
 
         <p><strong>수용 가능 인원</strong> {{ room.capacity }}명</p>
@@ -21,8 +24,10 @@
 
         <div class="time-header">
             <h3>이용 가능 시간</h3>
-            <span>총 {{ availableTimes.length }}개</span>
+            <div class="time-actions">
+            <span>총 <span class="count">{{ availableTimes.length }}</span>개</span>
             <button class="add-btn" @click="showAddModal = true">추가하기</button>
+            </div>
         </div>
 
         <table class="time-table">
@@ -59,14 +64,14 @@
         <AddAvailableTimeModal
             v-if="showAddModal"
             @close="showAddModal = false"
-            @save="fetchAvailableTimes" />
+            @save="saveAvailableTime" />
 
         <EditAvailableTimeModal
             v-if="showTimeEditModal"
             :time="selectedTime"
             @close="showTimeEditModal  = false"
             @save="updateTime" />
-    </div>
+        </div>
     </div>
 
     <EditRoomModal
@@ -82,16 +87,17 @@
 import { ref, onMounted } from "vue"
 // import Sidebar from "@/components/layout/Sidebar.vue"
 import AddAvailableTimeModal from "@/components/room/AddAvailableTimeModal.vue"
-import { getRoomDetail } from "@/api/room/roomApi.js"
+import { getRoomDetail, updateRoom, deleteRoom, createAvailableTime, getAvailableTimes, updateAvailableTime, deleteAvailableTime } from "@/api/room/roomApi.js"
 import { useRoute } from "vue-router"
 import EditRoomModal from "@/components/room/EditRoomModal.vue"
 import defaultImage from "@/assets/images/default-room.png"
 import EditAvailableTimeModal from '@/components/room/EditAvailableTimeModal.vue'
+import { useRouter } from "vue-router"
 
 const route = useRoute()
 const organizationId = Number(route.params.organizationId)
 const roomId = Number(route.params.roomId)
-
+const router = useRouter()
 const room = ref({})
 const availableTimes = ref([])
 
@@ -99,10 +105,8 @@ const showEditTimeModal = ref(false)
 
 const showAddModal = ref(false)
 
-// 회의실 수정 모달
 const showRoomEditModal = ref(false)
 
-// 이용 가능 시간 수정 모달
 const showTimeEditModal = ref(false)
 const selectedTime = ref(null)
 
@@ -115,7 +119,6 @@ const dayMap = {
     SAT: "토",
     SUN: "일",
 }
-
 
 function formatPeriod(start, end) {
     if (!start && !end) return '-'
@@ -159,9 +162,25 @@ function openEditTimeModal(time) {
 }
 
 function openTimeEditModal(time) {
-  selectedTime.value = { ...time }
-  showTimeEditModal.value = true
+    selectedTime.value = { ...time }
+    showTimeEditModal.value = true
 }
+
+async function deleteRoomConfirm() {
+    if (!confirm("정말 이 회의실을 삭제하시겠습니까?\n이미 예약이 있는 경우 삭제할 수 없습니다.")) return
+
+    try {
+        await deleteRoom(organizationId, roomId)
+
+        alert("회의실이 삭제되었습니다.")
+        router.push(`/organization/${organizationId}/admin/rooms`)
+
+    } catch (err) {
+        console.error(err)
+        alert("삭제 실패: 이미 예약이 존재하거나 권한이 없습니다.")
+    }
+}
+
 
 async function fetchRoomDetail() {
     const { data } = await getRoomDetail(organizationId, roomId)
@@ -169,24 +188,155 @@ async function fetchRoomDetail() {
 }
 
 async function fetchAvailableTimes() {
-  // TODO: 백엔드 연동 후 수정
-    availableTimes.value = [
-        { id: 1, name: "점심 타임", startTime: "13:00", endTime: "14:00", openTime: "상시" },
-        { id: 2, name: "저녁 1타임", startTime: "18:00", endTime: "20:00", openTime: "1일전 00:00" },
-    ]
+    try {
+        const { data } = await getAvailableTimes(organizationId, roomId)
+
+        availableTimes.value = data.map(t => ({
+        id: t.id,
+        name: t.name,
+
+        // 시간 변환
+        startTime: t.availableStartTime,
+        endTime: t.availableEndTime,
+
+        // 시간 간격
+        interval: t.timeInterval ? String(t.timeInterval) : "-",
+
+        // 예약 오픈 표시
+        openTime: t.reservationOpenDay !== null
+        ? `${t.reservationOpenDay}일전 ${t.reservationOpenTime || "00:00"}`
+        : "상시",
+
+    // 반복 요일
+    repeatDays: [
+    t.mon && "MON",
+    t.tue && "TUE",
+    t.wed && "WED",
+    t.thu && "THU",
+    t.fri && "FRI",
+    t.sat && "SAT",
+    t.sun && "SUN",
+    ].filter(Boolean),
+
+      // 반복 기간
+        repeatStart: t.repeatStartDay,
+        repeatEnd: t.repeatEndDay,
+        }))
+        availableTimes.value.sort((a, b) => {
+            const toMs = v => (v ? new Date(v).getTime() : Infinity)
+            return toMs(a.repeatStart) - toMs(b.repeatStart)
+    })
+    } catch (err) {
+        console.error("이용 가능 시간 조회 실패:", err)
+    }
 }
 
-async function deleteTime(timeId) {
-    if (!confirm("정말 삭제하시겠습니까?")) return
+async function updateTime(form) {
+    if (!form.id) { alert("수정 대상 ID가 없습니다."); return }
+    if (!form.name || !form.startTime || !form.endTime) {
+    alert("이름/시작/종료 시간을 입력해주세요."); return
+    }
 
-    await deleteAvailableTime(organizationId, roomId, timeId)
+    const repeatDate = form.repeatType === "repeat"
+    ? { start: form.repeatStart, end: form.repeatEnd }
+    : { start: form.singleDate, end: form.singleDate }
+
+    const payload = {
+    name: form.name,
+    mon: form.repeatDays.includes("MON"),
+    tue: form.repeatDays.includes("TUE"),
+    wed: form.repeatDays.includes("WED"),
+    thu: form.repeatDays.includes("THU"),
+    fri: form.repeatDays.includes("FRI"),
+    sat: form.repeatDays.includes("SAT"),
+    sun: form.repeatDays.includes("SUN"),
+
+    availableStartTime: form.startTime,
+    availableEndTime: form.endTime,
+
+    reservationOpenDay: form.openDaysBefore ? Number(form.openDaysBefore) : null,
+    reservationOpenTime: form.openTime || null,
+
+    repeatStartDay: form.repeatType === "repeat" ? form.repeatStart : form.singleDate,
+    repeatEndDay: form.repeatType === "repeat" ? form.repeatEnd : form.singleDate,
+
+    timeInterval: form.interval === "none" ? null : Number(form.interval),
+    }
+
+    try {
+    await updateAvailableTime(organizationId, roomId, form.id, payload)
     await fetchAvailableTimes()
+    showTimeEditModal.value = false
+    } catch (e) {
+    console.error(e)
+    alert("수정 실패: 입력을 다시 확인해주세요.")
+    }
 }
+
+async function deleteTime(id) {
+    if (!confirm("정말 삭제하시겠습니까?\n해당 시간에 예약이 존재하면 삭제할 수 없습니다.")) return
+
+    try {
+        await deleteAvailableTime(organizationId, roomId, id)
+        await fetchAvailableTimes()
+        alert("삭제되었습니다.")
+    } catch (err) {
+        console.error(err)
+        alert("삭제 실패: 이미 예약이 존재하거나 권한이 없습니다.")
+    }
+}
+
+async function saveAvailableTime(form) {
+
+    const payload = {
+    name: form.name,
+
+    // 요일 배열 → boolean 변환
+    mon: form.repeatDays.includes("MON"),
+    tue: form.repeatDays.includes("TUE"),
+    wed: form.repeatDays.includes("WED"),
+    thu: form.repeatDays.includes("THU"),
+    fri: form.repeatDays.includes("FRI"),
+    sat: form.repeatDays.includes("SAT"),
+    sun: form.repeatDays.includes("SUN"),
+
+    // 이용시간
+    availableStartTime: form.startTime,
+    availableEndTime: form.endTime,
+
+    // 예약 오픈 설정 (값 없으면 null)
+    reservationOpenDay: form.openDaysBefore ? Number(form.openDaysBefore) : null,
+    reservationOpenTime: form.openTime || null,
+
+    // 반복/하루 처리 (빈 문자열 → null)
+    repeatStartDay: form.repeatType === "repeat"
+        ? form.repeatStart
+        : form.singleDate,
+
+    repeatEndDay: form.repeatType === "repeat"
+        ? form.repeatEnd
+        : form.singleDate,
+
+    // 시간 간격
+    timeInterval: form.interval === "none" ? null : Number(form.interval)
+    }
+
+    console.log("등록 payload:", payload)
+
+    try {
+        await createAvailableTime(organizationId, roomId, payload)
+        await fetchAvailableTimes()
+        showAddModal.value = false
+    } catch (err) {
+        console.error(err)
+        alert("등록 실패: 입력값을 다시 확인해주세요.")
+    }
+}
+
 
 onMounted(async () => {
     await fetchRoomDetail()
-    await fetchAvailableTimes()
-})
+    await fetchAvailableTimes() })
 </script>
 
 <style scoped>
@@ -203,15 +353,18 @@ onMounted(async () => {
     align-items: flex-start;
 }
 
-.info {
-    flex: 1;
-}
+.info { flex: 1; }
 
 .info-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 14px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 16px;
 }
 
 .info-header h3 {
@@ -231,6 +384,15 @@ onMounted(async () => {
 
 .info p { margin-bottom: 10px; }
 
+.edit-btn,
+.delete-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
 .edit-btn {
     padding: 6px 12px;
     border: 1px solid #002b87;
@@ -244,6 +406,22 @@ onMounted(async () => {
 
 .edit-btn:hover {
     background: #002b87;
+    color: #fff;
+}
+
+.btn-group { display: flex; gap: 6px; }
+
+.delete-btn {
+    padding: 6px 12px;
+    border: 1px solid #d9534f;
+    background: #fff;
+    color: #d9534f;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.delete-btn:hover {
+    background: #d9534f;
     color: #fff;
 }
 
@@ -337,4 +515,22 @@ onMounted(async () => {
     color: #fff;
 }
 
+.time-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.time-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-actions span.count {
+    color: #f9c802;
+    font-weight: 700;
+    margin: 0;
+}
 </style>

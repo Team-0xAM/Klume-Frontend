@@ -3,7 +3,7 @@
     <div class="modal">
       <h2>회의실 추가</h2>
 
-      <form @submit.prevent="submitForm">
+      <form @submit.prevent="submit">
         <div class="form-group">
           <label>회의실 이름<span class="required">*</span></label>
           <input v-model="form.name" type="text" placeholder="회의실 이름을 입력해주세요" required />
@@ -11,7 +11,7 @@
 
         <div class="form-group">
           <label>회의실 이미지</label>
-          <input type="file" @change="handleFileUpload" />
+          <input type="file" @change="onFileChange" />
         </div>
 
         <div class="form-group">
@@ -35,30 +35,36 @@
 
 <script setup>
 import { ref } from 'vue'
-const emit = defineEmits(['close', 'save'])
+import { createRoom } from '@/api/room/roomApi.js'
+import { useRouter } from 'vue-router'
 
-// const form = ref({
-//   name: '',
-//   capacity: '',
-//   description: '',
-//   image: null,
-//   availableTime: 0,
-// })
+const props = defineProps({
+  organizationId: { type: Number, required: true }
+})
+const emit = defineEmits(['close', 'saved'])
 
 const form = ref({
   name: '',
-  capacity: '',
   description: '',
+  capacity: 0
 })
-
 const imageFile = ref(null)
+const router = useRouter()
 
-function handleFileUpload(e) {
-  imageFile.value = e.target.files[0]
+function onFileChange(e) {
+  imageFile.value = e.target.files[0] || null
 }
 
-function submitForm() {
-  emit('save', { ...form.value }, imageFile.value)
+async function submit() {
+  if (!form.value.name) return alert("회의실 이름을 입력하세요.")
+
+  try {
+    const { data } = await createRoom(props.organizationId, form.value, imageFile.value)
+    router.push(`/organization/${props.organizationId}/admin/rooms/${data.id}`)
+  } catch (e) {
+    console.error(e)
+    alert("회의실 등록 실패")
+  }
 }
 </script>
 

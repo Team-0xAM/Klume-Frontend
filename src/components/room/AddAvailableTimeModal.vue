@@ -48,18 +48,14 @@
           <!-- 반복 -->
           <div v-if="repeatType === 'repeat'">
             <div class="repeat-date-group">
-  <input type="date" v-model="form.repeatStart" />
-  <span>~</span>
-  <input type="date" v-model="form.repeatEnd" />
-</div>
+              <input type="date" v-model="form.repeatStart" />
+              <span>~</span>
+              <input type="date" v-model="form.repeatEnd" />
+            </div>
 
             <div class="weekday-buttons">
-              <button
-                v-for="day in days"
-                :key="day.value"
-                :class="{ active: form.repeatDays.includes(day.value) }"
-                @click="toggleDay(day.value)"
-              >
+              <button v-for="day in days" :key="day.value" :class="{ active: form.repeatDays.includes(day.value) }"
+                @click="toggleDay(day.value)">
                 {{ day.label }}
               </button>
             </div>
@@ -92,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 const emit = defineEmits(['close', 'save'])
 
 const repeatType = ref('repeat')
@@ -126,16 +122,56 @@ function toggleDay(day) {
     : form.value.repeatDays.push(day)
 }
 
+watch(
+  () => form.value.singleDate,
+  (newDate) => {
+    if (repeatType.value === 'single' && newDate) {
+      const date = new Date(newDate)
+      const dayIndex = date.getDay() // 0(일) ~ 6(토)
+      const map = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+      form.value.repeatDays = [map[dayIndex]]
+    }
+  }
+)
+
+watch(repeatType, (newType) => {
+  if (newType === 'repeat') {
+    form.value.repeatDays = []
+  } else if (newType === 'single' && form.value.singleDate) {
+    const date = new Date(form.value.singleDate)
+    const dayIndex = date.getDay()
+    const map = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    form.value.repeatDays = [map[dayIndex]]
+  }
+})
+
 function submit() {
+  // 필수값 체크
+  if (!form.value.name) return alert("이름을 입력해주세요.")
+  if (!form.value.startTime || !form.value.endTime)
+    return alert("이용 시작/종료 시간을 입력해주세요.")
+
+  if (repeatType.value === 'repeat') {
+    if (!form.value.repeatStart || !form.value.repeatEnd)
+      return alert("반복 기간을 선택해주세요.")
+  } else {
+    if (!form.value.singleDate)
+      return alert("날짜를 선택해주세요.")
+  }
+
+  // 호출 시 반복 타입 포함해서 전달
   emit('save', { ...form.value, repeatType: repeatType.value })
+  emit('close')
 }
 </script>
 
 <style scoped>
 .modal-overlay {
-    position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
@@ -150,7 +186,7 @@ function submit() {
   width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
@@ -173,7 +209,7 @@ function submit() {
   width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 h2 {
@@ -208,7 +244,9 @@ odal h2 {
   cursor: pointer;
 }
 
-.form-group { margin-bottom: 22px; }
+.form-group {
+  margin-bottom: 22px;
+}
 
 label {
   display: block;
@@ -217,7 +255,9 @@ label {
   color: #222;
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
   width: 100%;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -226,7 +266,9 @@ input, textarea, select {
   box-sizing: border-box;
 }
 
-.required { color: red; }
+.required {
+  color: red;
+}
 
 input {
   width: 100%;
@@ -253,7 +295,7 @@ input {
 .radio-group label {
   display: flex;
   align-items: center;
-  gap: 8px; 
+  gap: 8px;
   cursor: pointer;
   line-height: 1.4;
 }
@@ -263,12 +305,13 @@ input {
   height: 16px;
 }
 
-.form-group > .radio-group {
+.form-group>.radio-group {
   margin: 10px 0 14px 0;
 }
 
 .sub-text {
-  color: #d9534f; /* 붉은 안내 문구 */
+  color: #d9534f;
+  /* 붉은 안내 문구 */
   font-weight: 400;
   font-size: 12px;
   margin-left: 6px;
@@ -355,5 +398,7 @@ input {
   color: #fff;
 }
 
-.submit-btn:hover { background-color: #0044cc; }
+.submit-btn:hover {
+  background-color: #0044cc;
+}
 </style>
