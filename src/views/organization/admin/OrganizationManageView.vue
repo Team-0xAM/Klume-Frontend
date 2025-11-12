@@ -14,7 +14,10 @@
     </div>
 
     <transition name="fade" mode="out-in">
-      <component :is="currentTabComponent" class="tab-content" />
+      <component
+        :is="currentTabComponent"
+        class="tab-content"
+        :organization-id="organizationId" />
     </transition>
   </div>
 </template>
