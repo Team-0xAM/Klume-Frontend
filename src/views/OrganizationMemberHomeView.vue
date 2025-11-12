@@ -28,13 +28,19 @@
             <div class="section-header between">
                 <h3>회의실별 예약 현황 보기</h3>
 
-                <div class="room-select">
-                    <label for="roomSelect">회의실 선택</label>
-                    <select id="roomSelect" v-model="selectedRoom">
-                        <option v-for="room in roomOptions" :key="room" :value="room">
-                            {{ room }}
-                        </option>
-                    </select>
+                <div class="controls">
+                    <div class="date-select">
+                        <label>날짜 선택</label>
+                        <input type="date" v-model="selectedDate" class="date-input" />
+                    </div>
+                    <div class="room-select">
+                        <label for="roomSelect">회의실 선택</label>
+                        <select id="roomSelect" v-model="selectedRoom">
+                            <option v-for="room in roomOptions" :key="room" :value="room">
+                                {{ room }}
+                            </option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -100,6 +106,16 @@ const route = useRoute()
 const router = useRouter()
 const organizationId = ref(Number(route.params.organizationId))
 
+// 날짜 선택 (기본값: 오늘)
+const getTodayString = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+const selectedDate = ref(getTodayString())
+
 // 회의실 선택
 const selectedRoom = ref("");
 const roomOptions = ref([]);
@@ -107,17 +123,10 @@ const roomOptions = ref([]);
 // 일자별 예약 가능 시간 데이터
 const dailyAvailableTimes = ref([]);
 
-// 선택한 회의실 + 오늘 예약 오픈되는 것만 필터링
+// 선택한 회의실 + 선택한 날짜에 예약 오픈되는 것만 필터링
 const filteredOpenSlots = computed(() => {
-    // 한국 시간 기준 오늘 날짜
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const todayStr = `${year}-${month}-${day}` // YYYY-MM-DD
-
     return dailyAvailableTimes.value.filter(
-        (slot) => slot.roomName === selectedRoom.value && slot.reservationOpenDay === todayStr
+        (slot) => slot.roomName === selectedRoom.value && slot.reservationOpenDay === selectedDate.value
     )
 });
 
@@ -323,7 +332,33 @@ h3 {
     padding: 20px 0;
 }
 
-/* 회의실 선택 */
+/* 회의실 선택 및 날짜 선택 */
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.date-select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-select label {
+    font-weight: 600;
+    color: #222;
+}
+
+.date-input {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: "Noto Sans KR", sans-serif;
+}
+
 .room-select {
     display: flex;
     align-items: center;
