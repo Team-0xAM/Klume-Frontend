@@ -54,12 +54,8 @@
             </div>
 
             <div class="weekday-buttons">
-              <button
-                v-for="day in days"
-                :key="day.value"
-                :class="{ active: localTime.repeatDays.includes(day.value) }"
-                @click="toggleDay(day.value)"
-              >{{ day.label }}</button>
+              <button v-for="day in days" :key="day.value" :class="{ active: localTime.repeatDays.includes(day.value) }"
+                @click="toggleDay(day.value)">{{ day.label }}</button>
             </div>
           </div>
 
@@ -108,9 +104,32 @@ const days = [
   { label: '일', value: 'SUN' }
 ]
 
-// 초기값 세팅
-watch(() => props.time, (newVal) => {
-  localTime.value = { ...newVal }
+watch(() => props.time, (t) => {
+  if (!t) return
+
+  localTime.value = {
+    id: t.id,
+    name: t.name,
+    startTime: t.startTime,
+    endTime: t.endTime,
+    interval: t.interval === "-" ? "none" : t.interval,
+
+    repeatStart: t.repeatStart || "",
+    repeatEnd: t.repeatEnd || "",
+    repeatDays: Array.isArray(t.repeatDays) ? [...t.repeatDays] : [],
+
+    singleDate: (!t.repeatStart || t.repeatStart === t.repeatEnd) ? t.repeatStart : "",
+
+    // 예약 오픈 설정 파싱
+    openDaysBefore: t.openTime && t.openTime.includes("일전")
+      ? Number(t.openTime.split("일전")[0])
+      : "",
+    openTime: t.openTime && t.openTime.includes(":")
+      ? t.openTime.split(" ")[1]
+      : "",
+
+    repeatType: (t.repeatStart && t.repeatEnd && t.repeatStart !== t.repeatEnd) ? "repeat" : "single"
+  }
 }, { immediate: true })
 
 function toggleDay(day) {
@@ -119,7 +138,46 @@ function toggleDay(day) {
     : localTime.value.repeatDays.push(day)
 }
 
+watch(
+  () => localTime.value.singleDate,
+  (newDate) => {
+    if (localTime.value.repeatType === 'single' && newDate) {
+      const date = new Date(newDate)
+      const dayIndex = date.getDay() // 0(일)~6(토)
+      const map = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+      localTime.value.repeatDays = [map[dayIndex]]
+    }
+  }
+)
+
+watch(
+  () => localTime.value.repeatType,
+  (newType) => {
+    if (newType === 'repeat') {
+      localTime.value.repeatDays = [] // 초기화
+    } else if (newType === 'single' && localTime.value.singleDate) {
+      const date = new Date(localTime.value.singleDate)
+      const dayIndex = date.getDay()
+      const map = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+      localTime.value.repeatDays = [map[dayIndex]]
+    }
+  }
+)
+
 function save() {
+  // 필수값 체크
+  if (!localTime.value.name) return alert("이름을 입력해주세요.")
+  if (!localTime.value.startTime || !localTime.value.endTime)
+    return alert("이용 시작/종료 시간을 입력해주세요.")
+
+  if (localTime.value.repeatType === "repeat") {
+    if (!localTime.value.repeatStart || !localTime.value.repeatEnd)
+      return alert("반복 기간을 입력해주세요.")
+  } else {
+    if (!localTime.value.singleDate)
+      return alert("하루 예약 날짜를 선택해주세요.")
+  }
+
   emit('save', { ...localTime.value })
   emit('close')
 }
@@ -129,9 +187,11 @@ function save() {
 /* 동일 스타일 적용 (등록 모달과 완전 통일) */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.35);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,7 +205,7 @@ function save() {
   width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
@@ -178,7 +238,8 @@ label {
   display: block;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -205,7 +266,7 @@ input, select {
 .radio-group label {
   display: flex;
   align-items: center;
-  gap: 8px; 
+  gap: 8px;
   cursor: pointer;
   line-height: 1.4;
 }
@@ -215,7 +276,7 @@ input, select {
   height: 16px;
 }
 
-.form-group > .radio-group {
+.form-group>.radio-group {
   margin: 10px 0 14px 0;
 }
 
@@ -248,7 +309,8 @@ input, select {
   gap: 10px;
 }
 
-.cancel-btn, .submit-btn {
+.cancel-btn,
+.submit-btn {
   padding: 10px 18px;
   border-radius: 6px;
   border: none;
