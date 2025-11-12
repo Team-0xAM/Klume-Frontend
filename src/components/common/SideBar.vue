@@ -179,9 +179,9 @@ hr {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
-  margin-top: 16px;
+  padding-top: 8px;
   border-top: 1px solid #eee;
+  flex-shrink: 0;
 }
 
 .user-info {

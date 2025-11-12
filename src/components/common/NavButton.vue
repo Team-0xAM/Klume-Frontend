@@ -66,6 +66,7 @@ const handleClick = (e) => {
   transition: background-color 0.25s ease, color 0.25s ease;
   width: 100%;
   text-align: left;
+  text-decoration: none;
 }
 
 .icon {

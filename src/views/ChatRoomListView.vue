@@ -1,21 +1,6 @@
 <template>
   <div class="chat-room-list-view">
-    <!-- 사이드바 (왼쪽) -->
-    <SideBar
-      :organization-name="organizationName"
-      :user-name="userName"
-      admin-menu-title="관리자메뉴"
-    >
-      <template #main-menu>
-        <!-- 일반 메뉴 슬롯 -->
-      </template>
-
-      <template #admin-menu>
-        <!-- 관리자 메뉴 슬롯 -->
-      </template>
-    </SideBar>
-
-    <!-- 채팅방 목록 (중간) -->
+    <!-- 채팅방 목록 (왼쪽) -->
     <div class="chat-list-container">
       <div class="chat-list-header">
         <h2 class="page-title">{{ selectedRoom ? (selectedRoom.assignedToName || '미배정') : '채팅 문의' }}</h2>
@@ -112,12 +97,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, toRefs } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
+import { fetchOrganizationInfo, organizationRole } from '@/composables/useOrganization.js'
 
 const route = useRoute()
 
@@ -126,8 +112,8 @@ const organizationId = ref(parseInt(route.params.organizationId) || 1)
 
 // 사용자 정보
 const currentUserEmail = ref(localStorage.getItem('email') || '')
-const currentUserId = ref(null) // OrganizationMember ID - API에서 가져와야 함
-const isAdmin = ref(true) // 관리자 여부 - 임시로 true 설정
+const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
+const isAdmin = computed(() => organizationRole.value === 'ADMIN') // 역할에서 관리자 여부 확인
 
 // 채팅방 목록
 const chatRooms = ref([])
@@ -251,13 +237,21 @@ const handleUnassign = async (roomId) => {
 onMounted(() => {
   loadChatRooms()
 })
+
+// 컴포넌트 언마운트 시 WebSocket 연결 정리
+onUnmounted(() => {
+  if (chatInstance) {
+    chatInstance.disconnect()
+    chatInstance = null
+  }
+})
 </script>
 
 <style scoped>
 .chat-room-list-view {
   display: flex;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 80px); /* OrganizationLayout의 padding 고려 */
   background-color: #f8f9fb;
 }
 

@@ -1,75 +1,9 @@
 <template>
-  <div class="org-layout">
-    <SideBar
-      :organization-name="organizationName"
-      :profile-image="organizationImage"
-      :user-name="userNickname"
-      :role="organizationRole"
-    >
-      <!-- 메인 메뉴 -->
-      <template #main-menu>
-        <NavButton
-          label="홈"
-          icon="icon_home.png"
-          :to="`/organization/${organizationId}`"
-        />
-        <NavButton
-          label="예약하기"
-          icon="icon_clock.png"
-          :to="`/organization/${organizationId}/reserve`"
-        />
-        <NavButton
-          label="내 예약 보기"
-          icon="icon_check.png"
-          :to="`/organization/${organizationId}/my-reservations`"
-        />
-        <NavButton
-          label="공지사항"
-          icon="icon_bookmark.png"
-          :to="`/organization/${organizationId}/notices`"
-        />
-        <NavButton
-          label="조직 대시보드로 가기"
-          icon="icon_grid.png"
-          :to="`/organization/${organizationId}/dashboard`"
-        />
-      </template>
-
-      <!-- 관리자 메뉴 -->
-      <template v-if="organizationRole === 'ADMIN'" #admin-menu>
-        <NavButton
-          label="예약 관리"
-          icon="icon_calendar.png"
-          :to="`/organization/${organizationId}/admin/reservations`"
-        />
-        <NavButton
-          label="회의실 관리"
-          icon="icon_navigation.png"
-          :to="`/organization/${organizationId}/admin/rooms`"
-        />
-        <NavButton
-          label="조직 관리"
-          icon="icon_users.png"
-          :to="`/organization/${organizationId}/admin/organization`"
-        />
-        <NavButton
-          label="공지사항 관리"
-          icon="icon_bookmark.png"
-          :to="`/organization/${organizationId}/admin/notices`"
-        />
-        <NavButton
-          label="채팅 문의"
-          icon="icon_circle.png"
-          :to="`/organization/${organizationId}/chat`"
-        />
-      </template>
-    </SideBar>
-
-    <div class="notice-admin-container">
-      <div class="page-header">
-        <h2>공지사항 관리</h2>
-        <p>조직에 대한 공지사항을 등록할 수 있는 공간입니다</p>
-      </div>
+  <div class="notice-admin-container">
+    <div class="page-header">
+      <h2>공지사항 관리</h2>
+      <p>조직에 대한 공지사항을 등록할 수 있는 공간입니다</p>
+    </div>
 
     <div class="table-header">
       <span>총 {{ notices.length }}개</span>
@@ -106,18 +40,15 @@
       @close="isModalOpen = false"
       @save="handleSave"
     />
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import NoticeModal from '../components/notice/NoticeModal.vue'
-import SideBar from '@/components/common/SideBar.vue'
-import NavButton from '@/components/common/NavButton.vue'
 import { useRoute } from 'vue-router'
 import { getNotices, createNotice, updateNotice, deleteNotice as deleteNoticeApi } from '../api/notice'
-import { fetchOrganizationInfo, organizationRole, organizationName, organizationImage, userNickname } from '@/composables/useOrganization.js'
+import { fetchOrganizationInfo } from '@/composables/useOrganization.js'
 
 const route = useRoute()
 const organizationId = route.params.organizationId
@@ -225,16 +156,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.org-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
 .notice-admin-container {
-  flex: 1;
-  padding: 40px;
-  background-color: #f8f9fb;
-  min-height: 100vh;
+  width: 100%;
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
   color: #222;
 }
