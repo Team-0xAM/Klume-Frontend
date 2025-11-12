@@ -34,12 +34,15 @@ const routes = [
     {path: '/test/modar', component: ModalTestView},
     {path: '/test/orgcard', component: OrganizationListTestView},
 
+    /* 관리자메뉴 예약관리 페이지 */
+    {path: '/adminreservation', component: AdminReservationPage},
+
     /* 관리자메뉴 회의실 관리페이지 */
     {
-  path: '/organization/:organizationId/admin/rooms',
-  name: 'AdminRoomList',
-  component: AdminRoomPage,
-  meta: { requiresAdmin: true }
+      path: '/organization/:organizationId/admin/rooms',
+      name: 'AdminRoomList',
+      component: AdminRoomPage,
+      meta: { requiresAdmin: true }
     },
     {
       path: "/organization/:organizationId/admin/rooms/:roomId",
@@ -49,7 +52,6 @@ const routes = [
     },
 
     /* 피그마용 삭제예정 */
-    {path: '/adminreservation', component: AdminReservationPage},
     {path: '/userhome', component: userhome},
 
     { path: '/reservation', component: ReservationPage },
