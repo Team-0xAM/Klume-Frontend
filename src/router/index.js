@@ -66,10 +66,6 @@ const routes = [
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
 
-  // 채팅 (복수형 - 먼저 정의)
-  { path: "/organizations/:organizationId/chat", component: ChatRoomListView, meta: { requiresAuth: true } },
-  { path: "/organizations/:organizationId/chat/:roomId", component: ChatView, meta: { requiresAuth: true } },
-
   // 조직 내부 라우트
   {
     path: "/organization/:organizationId",
@@ -105,11 +101,23 @@ const routes = [
         component: OrganizationManageView,
         meta: { requiresAdmin: true },
       },
+      {
+        path: "admin/notices",
+        name: "AdminNoticeManage",
+        component: NoticeAdminPageView,
+        meta: { requiresAdmin: true },
+      },
+      {
+        path: "chat",
+        name: "ChatRoomList",
+        component: ChatRoomListView,
+        meta: { requiresAdmin: true },
+      },
     ],
   },
 
-  // 관리자 공지
-  { path: "/organization/:organizationId/admin/notices", component: NoticeAdminPageView },
+  // 채팅방 상세 (복수형 organizations 유지 - 별도 페이지)
+  { path: "/organizations/:organizationId/chat/:roomId", component: ChatView, meta: { requiresAuth: true } },
 
   // 회의실 / 예약 관련
   { path: "/roomlist", component: MeetingRoomList },
