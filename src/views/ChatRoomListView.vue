@@ -91,19 +91,23 @@
         <div class="divider"></div>
 
         <!-- 로딩 상태 -->
-        <div v-if="chatLoading" class="status-message">
+        <div v-if="isConnecting" class="status-message">
           <p>채팅을 불러오는 중...</p>
         </div>
 
         <!-- 에러 상태 -->
-        <div v-else-if="chatErrorMessage" class="status-message error">
-          <p>{{ chatErrorMessage }}</p>
+        <div v-else-if="errorMessage" class="status-message error">
+          <p>{{ errorMessage }}</p>
           <button @click="reconnect" class="retry-button">다시 연결</button>
         </div>
 
         <!-- 채팅 메시지 영역 -->
         <div v-else class="chat-content">
-          <ChatMessageList :messages="messages" :current-user-id="currentUserEmail" />
+          <!-- 디버그: 메시지 개수 확인 -->
+          <div style="background: yellow; padding: 10px;">
+            메시지 개수: {{ messages?.length || 0 }} | 연결 상태: {{ isConnected }}
+          </div>
+          <ChatMessageList :messages="messages || []" :current-user-id="currentUserEmail" />
           <ChatInput @send="handleSendMessage" :disabled="!isConnected" />
         </div>
       </div>
@@ -112,14 +116,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, toRefs } from 'vue'
 import { useRoute } from 'vue-router'
-import SideBar from '../components/common/SideBar.vue'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
-import { fetchOrganizationInfo, organizationRole, organizationName, organizationImage, userNickname, organizationId as orgId } from '@/composables/useOrganization.js'
 
 const route = useRoute()
 
@@ -128,10 +130,8 @@ const organizationId = ref(parseInt(route.params.organizationId) || 1)
 
 // 사용자 정보
 const currentUserEmail = ref(localStorage.getItem('email') || '')
-const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
-const userName = ref(currentUserEmail.value)
-const organizationName = ref('조직명') // 하드코딩(임시)
-const isAdmin = ref(false) // 하드코딩(임시) 관리자 여부 - API에서 가져와야 함
+const currentUserId = ref(null) // OrganizationMember ID - API에서 가져와야 함
+const isAdmin = ref(true) // 관리자 여부 - 임시로 true 설정
 
 // 채팅방 목록
 const chatRooms = ref([])
@@ -153,11 +153,11 @@ const filteredChatRooms = computed(() => {
 })
 
 // 채팅 관련 상태
-let chatInstance = null
 const messages = ref([])
 const isConnected = ref(false)
-const chatLoading = ref(false)
-const chatErrorMessage = ref('')
+const isConnecting = ref(false)
+const errorMessage = ref('')
+let chatInstance = null
 
 // 채팅방 목록 로드
 const loadChatRooms = async () => {
@@ -177,6 +177,7 @@ const loadChatRooms = async () => {
 
 // 채팅방 선택
 const selectChatRoom = (room) => {
+  console.log('=== 채팅방 선택 ===', room)
   selectedRoomId.value = room.roomId
   selectedRoom.value = room
 
@@ -188,11 +189,24 @@ const selectChatRoom = (room) => {
   // 새 채팅 연결 - isAdmin 파라미터 전달
   chatInstance = useChat(organizationId.value, room.roomId, isAdmin.value)
 
-  // ref를 직접 할당하여 반응성 유지
-  messages = chatInstance.messages
-  isConnected = chatInstance.isConnected
-  chatLoading = chatInstance.isConnecting
-  chatErrorMessage = chatInstance.errorMessage
+  // watch를 사용해서 chatInstance의 ref들을 동기화
+  watch(() => chatInstance.messages.value, (newMessages) => {
+    messages.value = newMessages
+  }, { deep: true, immediate: true })
+
+  watch(() => chatInstance.isConnected.value, (newValue) => {
+    isConnected.value = newValue
+  }, { immediate: true })
+
+  watch(() => chatInstance.isConnecting.value, (newValue) => {
+    isConnecting.value = newValue
+  }, { immediate: true })
+
+  watch(() => chatInstance.errorMessage.value, (newValue) => {
+    errorMessage.value = newValue
+  }, { immediate: true })
+
+  console.log('=== 초기 메시지 ===', chatInstance.messages.value)
 
   // 웹소켓 연결
   chatInstance.connect()
@@ -238,10 +252,7 @@ const handleUnassign = async (roomId) => {
 }
 
 // 컴포넌트 마운트 시 목록 로드
-onMounted(async () => {
-  // 조직 정보 로드
-  await fetchOrganizationInfo(organizationId.value)
-  // 채팅방 목록 로드
+onMounted(() => {
   loadChatRooms()
 })
 </script>

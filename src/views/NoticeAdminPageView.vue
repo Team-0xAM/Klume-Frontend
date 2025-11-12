@@ -60,7 +60,7 @@
         <NavButton
           label="채팅 문의"
           icon="icon_circle.png"
-          :to="`/organizations/${organizationId}/chat`"
+          :to="`/organization/${organizationId}/chat`"
         />
       </template>
     </SideBar>
