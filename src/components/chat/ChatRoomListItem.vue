@@ -14,23 +14,26 @@
     </div>
 
     <div v-if="showAssignButton" class="action-area" @click.stop>
+      <!-- 내가 담당한 경우 -->
       <button
-        v-if="!chatRoom.assignedToName"
-        class="assign-button"
+        v-if="isMyAssignment"
+        class="action-button assigned"
+        @click="$emit('unassign')"
+      >
+        담당 해제
+      </button>
+      <!-- 담당되지 않았거나 다른 사람이 담당한 경우 -->
+      <button
+        v-else
+        class="action-button unassigned"
         @click="$emit('assign')"
       >
         담당하기
       </button>
-      <div v-else class="assigned-info">
-        <span class="assigned-label">담당: {{ chatRoom.assignedToName }}</span>
-        <button
-          v-if="isMyAssignment"
-          class="unassign-button"
-          @click="$emit('unassign')"
-        >
-          담당 해제
-        </button>
-      </div>
+      <!-- 담당자 정보 표시 (다른 사람이 담당한 경우) -->
+      <span v-if="chatRoom.assignedToName && !isMyAssignment" class="assigned-label">
+        담당: {{ chatRoom.assignedToName }}
+      </span>
     </div>
   </div>
 </template>
@@ -65,6 +68,11 @@ const userInitial = computed(() => {
 })
 
 const lastMessage = computed(() => {
+  if (props.chatRoom.lastMessageContent) {
+    // 메시지가 너무 길면 자르기 (30자 제한)
+    const content = props.chatRoom.lastMessageContent
+    return content.length > 30 ? content.substring(0, 30) + '...' : content
+  }
   return '메시지 없음'
 })
 
@@ -201,51 +209,40 @@ const isMyAssignment = computed(() => {
   align-items: center;
 }
 
-.assign-button {
+.action-button {
   padding: 6px 16px;
-  background-color: #0c1c54;
-  color: white;
   border: none;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
-  font-family: 'Noto Sans KR', sans-serif;
-}
-
-.assign-button:hover {
-  background-color: #15266b;
-}
-
-.assigned-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.assigned-label {
-  font-size: 12px;
-  color: #666;
-  flex: 1;
-}
-
-.unassign-button {
-  padding: 4px 12px;
-  background-color: #f0f0f0;
-  color: #666;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
   transition: all 0.2s;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
-.unassign-button:hover {
+/* 담당하기 버튼 (파란색) */
+.action-button.unassigned {
+  background-color: #0c1c54;
+  color: white;
+}
+
+.action-button.unassigned:hover {
+  background-color: #15266b;
+}
+
+/* 담당 해제 버튼 (회색) */
+.action-button.assigned {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.action-button.assigned:hover {
   background-color: #e0e0e0;
   color: #333;
+}
+
+.assigned-label {
+  font-size: 12px;
+  color: #999;
 }
 </style>

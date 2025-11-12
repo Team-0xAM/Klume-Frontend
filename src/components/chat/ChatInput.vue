@@ -1,6 +1,13 @@
 <template>
   <div class="chat-input">
-    <div class="input-container">
+    <!-- 담당자가 아닐 때 안내 영역 -->
+    <div v-if="disabled && disabledMessage" class="disabled-notice">
+      <p class="notice-text">{{ disabledMessage }}</p>
+      <slot name="action-button"></slot>
+    </div>
+
+    <!-- 일반 입력창 -->
+    <div v-else class="input-container">
       <textarea
         v-model="message"
         @keydown.enter.exact.prevent="handleSend"
@@ -37,6 +44,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  disabledMessage: {
+    type: String,
+    default: ''
   }
 })
 
@@ -83,6 +94,25 @@ watch(message, () => {
   padding: 16px 20px;
   background-color: #ffffff;
   border-top: 1px solid #e0e0e0;
+}
+
+.disabled-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  gap: 16px;
+}
+
+.notice-text {
+  margin: 0;
+  font-size: 14px;
+  color: #856404;
+  font-weight: 500;
+  flex: 1;
 }
 
 .input-container {

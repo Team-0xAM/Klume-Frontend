@@ -97,10 +97,12 @@ export const sendMessage = (client, messageData) => {
   }
 
   try {
+    console.log('=== 메시지 전송 ===', messageData)
     client.publish({
       destination: '/app/chat',
       body: JSON.stringify(messageData)
     })
+    console.log('=== 메시지 전송 완료 ===')
     return true
   } catch (error) {
     console.error('Failed to send message:', error)

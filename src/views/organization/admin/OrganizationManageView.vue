@@ -21,7 +21,6 @@
 
     <transition name="fade" mode="out-in">
       <component :is="currentTabComponent" class="tab-content" :organization-id="organizationId" />
-    </transition>
 
     <!-- 초대 코드 모달 -->
     <div v-if="showInviteModal" class="modal-overlay" @click="closeInviteModal">
@@ -122,7 +121,6 @@ const underlineStyle = computed(() => ({
   width: `${underlineWidth.value}px`
 }))
 
-
 const handleInvite = async () => {
   try {
     const response = await getinvitationCode(organizationId)
@@ -151,6 +149,7 @@ const copyInviteCode = () => {
       alert('복사에 실패했습니다.')
     })
 }
+
 </script>
 
 <style scoped>
