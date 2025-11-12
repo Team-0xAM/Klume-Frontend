@@ -48,7 +48,7 @@
         <path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"></path>
       </svg>
       <p>가입한 조직이 없습니다</p>
-      <p class="empty-subtitle">조직에 가입하여 관리자와 대화를 시작하세요</p>
+      <p class="empty-subtitle">조직에 가입하여 매니저와 대화를 시작하세요</p>
     </div>
   </div>
 </template>

@@ -134,7 +134,9 @@ export const useChat = (organizationId, roomId, isAdmin) => {
     errorMessage.value = ''
 
     const onMessageReceived = (message) => {
+      console.log('=== onMessageReceived 콜백 실행 ===', message)
       messages.value.push(message)
+      console.log('=== messages 배열에 추가 완료 ===', messages.value.length)
     }
 
     const onConnected = () => {
@@ -180,7 +182,7 @@ export const useChat = (organizationId, roomId, isAdmin) => {
     const messageData = {
       roomId: roomId,
       content: content.trim(),
-      isAdmin: isAdmin // API 가이드에 따라 isAdmin 필드 사용
+      admin: isAdmin // 백엔드 MessageRequestDTO의 admin 필드에 맞춤
     }
 
     publishMessage(client, messageData)

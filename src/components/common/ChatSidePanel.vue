@@ -121,7 +121,7 @@ defineExpose({
   position: fixed;
   top: 0;
   right: 0;
-  width: 450px;
+  width: 600px;
   max-width: 90vw;
   height: 100vh;
   background-color: #ffffff;
