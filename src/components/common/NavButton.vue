@@ -1,8 +1,10 @@
 <template>
-  <button
+  <component
+    :is="to ? 'router-link' : 'button'"
+    :to="to"
     class="nav-button"
-    :class="[{ active: isActive }, variant]"
-    @click="$emit('click')"
+    :class="[{ active: isActive || isRouteActive }, variant]"
+    @click="handleClick"
   >
     <img
       v-if="icon"
@@ -11,11 +13,14 @@
       class="icon"
     />
     <span>{{ label }}</span>
-  </button>
+  </component>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const props = defineProps({
   label: { type: String, required: true },
   icon: { type: String, default: null },
   variant: {
@@ -24,7 +29,28 @@ defineProps({
     validator: (v) => ['white', 'gray', 'navy'].includes(v),
   },
   isActive: { type: Boolean, default: false },
-});
+  to: { type: [String, Object], default: null },
+})
+
+const emit = defineEmits(['click'])
+const route = useRoute()
+
+const isRouteActive = computed(() => {
+  if (!props.to) return false
+  if (typeof props.to === 'string') {
+    return route.path === props.to
+  }
+  if (props.to.name) {
+    return route.name === props.to.name
+  }
+  return false
+})
+
+const handleClick = (e) => {
+  if (!props.to) {
+    emit('click', e)
+  }
+}
 </script>
 
 <style scoped>
@@ -40,6 +66,7 @@ defineProps({
   transition: background-color 0.25s ease, color 0.25s ease;
   width: 100%;
   text-align: left;
+  text-decoration: none;
 }
 
 .icon {

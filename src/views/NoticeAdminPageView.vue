@@ -21,8 +21,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="notice in sortedNotices" :key="notice.id">
-          <td>{{ notice.id }}</td>
+        <tr v-for="(notice, index) in sortedNotices" :key="notice.id">
+          <td>{{ notices.length - index }}</td>
           <td>{{ notice.title }}</td>
           <td>{{ notice.authorName ? notice.authorName : '(닉네임 없음)' }}</td>
           <td>{{ formatDate(notice.createdAt) }}</td>
@@ -48,6 +48,7 @@ import { ref, computed, onMounted } from 'vue'
 import NoticeModal from '../components/notice/NoticeModal.vue'
 import { useRoute } from 'vue-router'
 import { getNotices, createNotice, updateNotice, deleteNotice as deleteNoticeApi } from '../api/notice'
+import { fetchOrganizationInfo } from '@/composables/useOrganization.js'
 
 const route = useRoute()
 const organizationId = route.params.organizationId
@@ -148,14 +149,15 @@ const formatDate = (dateStr) => {
   return dateStr.split('T')[0].replace(/-/g, '.')
 }
 
-onMounted(fetchNotices)
+onMounted(async () => {
+  await fetchOrganizationInfo(organizationId)
+  fetchNotices()
+})
 </script>
 
 <style scoped>
 .notice-admin-container {
-  padding: 40px;
-  background-color: #f8f9fb;
-  min-height: 100vh;
+  width: 100%;
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
   color: #222;
 }
