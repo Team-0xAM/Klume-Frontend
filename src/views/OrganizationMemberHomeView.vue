@@ -114,19 +114,42 @@ const filteredOpenSlots = computed(() =>
     )
 );
 
-// 회의실별 예약 가능 시간 API 호출
-const fetchDailyAvailableTimes = async () => {
+// 회의실 목록과 예약 가능 시간 조회
+const fetchRoomsAndAvailableTimes = async () => {
     try {
-        const res = await api.get(
-            `/organizations/${organizationId.value}/daily-available-times`
-        );
-        dailyAvailableTimes.value = res.data;
+        // 1. 회의실 목록 조회
+        const roomsRes = await api.get(`/organizations/${organizationId.value}/rooms`)
+        const rooms = Array.isArray(roomsRes.data) ? roomsRes.data : []
 
-        // 중복 제거된 회의실 목록 세팅
-        roomOptions.value = [...new Set(res.data.map((item) => item.roomName))];
-        selectedRoom.value = roomOptions.value[0] || "";
+        // 회의실 이름 목록 생성
+        roomOptions.value = rooms.map(room => room.name)
+        selectedRoom.value = roomOptions.value[0] || ""
+
+        // 2. 각 회의실의 예약 가능 시간 조회
+        const allTimes = []
+        for (const room of rooms) {
+            try {
+                const timesRes = await api.get(`/organizations/${organizationId.value}/rooms/${room.id}/available-times`)
+                const times = Array.isArray(timesRes.data) ? timesRes.data : []
+
+                // 각 예약 가능 시간에 회의실 이름 추가
+                times.forEach(time => {
+                    allTimes.push({
+                        roomName: room.name,
+                        availableStartTime: time.available_start_time || time.availableStartTime,
+                        availableEndTime: time.available_end_time || time.availableEndTime,
+                        reservationOpenDay: time.reservation_open_day || time.reservationOpenDay,
+                        reservationOpenTime: time.reservation_open_time || time.reservationOpenTime
+                    })
+                })
+            } catch (err) {
+                console.error(`회의실 ${room.name}의 예약 가능 시간 조회 실패:`, err)
+            }
+        }
+
+        dailyAvailableTimes.value = allTimes
     } catch (err) {
-        console.error("예약 가능 시간 조회 실패:", err);
+        console.error("회의실 및 예약 가능 시간 조회 실패:", err);
         dailyAvailableTimes.value = []
         roomOptions.value = []
     }
@@ -214,7 +237,7 @@ const goToNoticeDetail = (noticeId) => {
 }
 
 onMounted(async () => {
-    await fetchDailyAvailableTimes();
+    await fetchRoomsAndAvailableTimes();
     await fetchMyTodayReservations();
     await fetchNotices();
 });
