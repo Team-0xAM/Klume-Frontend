@@ -29,9 +29,9 @@
         <div class="modal-icon">
           <img :src="InvitationImage">
         </div>
-        
+
         <h3 class="modal-title">{{organization?.name}}</h3>
-        
+
         <p class="modal-description">
           새로운 구성원을 우리 조직에 초대해 보세요.<br>
           아래 링크를 복사하여 손쉽게 공유할 수 있습니다.
@@ -45,8 +45,9 @@
           </div>
           <button class="copy-button" @click="copyInviteCode">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+              <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5"
+                stroke="currentColor" stroke-width="2" />
             </svg>
           </button>
         </div>

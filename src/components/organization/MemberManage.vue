@@ -1,18 +1,4 @@
 <template>
-    <div>
-        <h2 class="section-title">회원 관리</h2>
-        <p>이곳에 기존 “회원 관리” 목록 테이블을 넣으면 됩니다.</p>
-    </div>
-</template>
-
-<style scoped>
-.section-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 16px;
-}
-</style>
-<template>
     <div class="group-manage">
         <h2 class="section-title">회원 관리</h2>
         <p class="section-subtitle">조직 내 회원의 정보를 확인하고 권한을 관리할 수 있습니다.</p>
