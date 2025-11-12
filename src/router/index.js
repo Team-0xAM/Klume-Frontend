@@ -16,7 +16,7 @@ import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationCreateView from "@/views/OrganizationCreateView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 import OrganizationJoinWithCodeView from "@/views/OrganizationJoinWithCodeView.vue";
-import OrganizationMemberHomeView from "@/views/OrganizationMemberHomeView.vue"; // ✅ 너의 브랜치 추가
+import OrganizationMemberHomeView from "@/views/OrganizationMemberHomeView.vue"; // 너의 브랜치 추가
 
 // --- 채팅 및 공지 ---
 import ChatRoomListView from "@/views/ChatRoomListView.vue";
@@ -70,7 +70,7 @@ const routes = [
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
 
-  // ✅ 사용자 홈 라우트 추가
+  // 사용자 홈 라우트 추가
   {
     path: "/organization/:organizationId/home",
     name: "OrganizationMemberHome",
