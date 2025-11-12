@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted, onUpdated } from 'vue'
 
 const props = defineProps({
   messages: {
@@ -66,17 +66,37 @@ const formatTime = (timestamp) => {
   }
 }
 
+// 스크롤을 맨 아래로 이동하는 함수
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messageContainer.value) {
+      console.log('스크롤 전 scrollTop:', messageContainer.value.scrollTop)
+      console.log('scrollHeight:', messageContainer.value.scrollHeight)
+      messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+      console.log('스크롤 후 scrollTop:', messageContainer.value.scrollTop)
+    } else {
+      console.log('messageContainer가 없습니다')
+    }
+  })
+}
+
 // 메시지가 추가되면 스크롤을 아래로
 watch(
-  () => props.messages.length,
+  () => props.messages,
   () => {
-    nextTick(() => {
-      if (messageContainer.value) {
-        messageContainer.value.scrollTop = messageContainer.value.scrollHeight
-      }
-    })
-  }
+    scrollToBottom()
+  },
+  { deep: true, immediate: true }
 )
+
+// 컴포넌트 마운트 및 업데이트 시 스크롤
+onMounted(() => {
+  scrollToBottom()
+})
+
+onUpdated(() => {
+  scrollToBottom()
+})
 </script>
 
 <style scoped>
@@ -104,13 +124,17 @@ watch(
 .messages {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .message-wrapper {
   display: flex;
-  justify-content: flex-start;
   animation: fadeIn 0.3s ease-in;
+  width: 100%;
+}
+
+.message-wrapper:not(.my-message) {
+  justify-content: flex-start;
 }
 
 .message-wrapper.my-message {
@@ -118,40 +142,41 @@ watch(
 }
 
 .message-bubble {
-  max-width: 60%;
-  padding: 10px 14px;
+  max-width: 70%;
+  padding: 12px 16px;
   border-radius: 18px;
   position: relative;
+  display: inline-block;
 }
 
 /* 상대방 메시지 (왼쪽) - 회색 배경 */
 .message-wrapper:not(.my-message) .message-bubble {
-  background-color: #f0f0f0 !important;
-  border-top-left-radius: 4px !important;
+  background-color: #f0f0f0;
+  border-top-left-radius: 4px;
 }
 
 /* 내 메시지 (오른쪽) - 노란색 배경 */
 .message-wrapper.my-message .message-bubble {
-  background-color: #ffe812 !important;
-  color: #000 !important;
-  border-top-right-radius: 4px !important;
+  background-color: #ffe812;
+  color: #000;
+  border-top-right-radius: 4px;
 }
 
 .message-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .sender-name {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: #666;
 }
 
 .my-message .sender-name {
-  color: #333;
+  color: #222;
 }
 
 .admin-badge {
@@ -169,9 +194,9 @@ watch(
 }
 
 .message-content {
-  font-size: 14px;
-  line-height: 1.5;
-  color: #000;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #222;
   word-wrap: break-word;
   white-space: pre-wrap;
 }
@@ -181,13 +206,17 @@ watch(
 }
 
 .message-time {
-  margin-top: 6px;
-  font-size: 11px;
+  margin-top: 8px;
+  font-size: 12px;
   color: #999;
-  text-align: right;
+}
+
+.message-wrapper:not(.my-message) .message-time {
+  text-align: left;
 }
 
 .my-message .message-time {
+  text-align: right;
   color: #666;
 }
 
