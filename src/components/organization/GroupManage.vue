@@ -110,37 +110,23 @@ function closeModal() {
 }
 
 async function saveGroup() {
-    try {
-        if (!form.value.name.trim()) {
-        alert('그룹명을 입력해주세요.')
-        return
-    }
+  if (!form.value.name.trim()) return alert('그룹명을 입력해주세요.')
 
-    const orgId = props.organizationId
-    console.log('🧩 수정 요청')
-    console.log('organizationId:', orgId)
-    console.log('organizationGroupId:', form.value.organizationGroupId)
-    console.log('요청 URL:', `/organizations/${orgId}/groups/${form.value.organizationGroupId}`)
+  if (editMode.value) {
+    console.log('PUT URL:', `/organizations/${props.organizationId}/groups/${form.value.organizationGroupId}`)
+    await updateGroup(props.organizationId, form.value.organizationGroupId, {
+      name: form.value.name,
+      description: form.value.description
+    })
+  } else {
+    await createGroup(props.organizationId, {
+      name: form.value.name,
+      description: form.value.description
+    })
+  }
 
-    if (editMode.value) {
-            console.log('PUT URL:', `/organizations/${organizationId}/groups/${form.value.organizationGroupId}`)
-        await updateGroup(organizationId, form.value.organizationGroupId, {
-            name: form.value.name,
-            description: form.value.description
-        })
-        } else {
-        await createGroup(organizationId, {
-            name: form.value.name,
-            description: form.value.description
-        })
-        }
-
-        await fetchGroups()
-        closeModal()
-    } catch (err) {
-        console.error('그룹 저장 실패:', err)
-        alert('그룹 저장 중 오류가 발생했습니다.')
-    }
+  await fetchGroups()
+  showModal.value = false
 }
 
 async function removeGroup(group) {

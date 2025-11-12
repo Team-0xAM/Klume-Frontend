@@ -27,6 +27,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import OrganizationInfo from '@/components/organization/OrganizationInfo.vue'
 import GroupManage from '@/components/organization/GroupManage.vue'
 import MemberManage from '@/components/organization/MemberManage.vue'
+import { useRoute } from 'vue-router'
 
 const tabs = [
   { label: '조직 정보', value: 'info', component: OrganizationInfo },
@@ -59,6 +60,10 @@ const underlineStyle = computed(() => ({
   left: `${underlineLeft.value}px`,
   width: `${underlineWidth.value}px`
 }))
+
+const route = useRoute()
+const organizationId = Number(route.params.organizationId)
+
 </script>
 
 <style scoped>
