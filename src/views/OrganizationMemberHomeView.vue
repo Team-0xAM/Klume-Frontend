@@ -52,14 +52,14 @@
                         <td>
                             {{ item.availableStartTime }} ~ {{ item.availableEndTime }}
                         </td>
-                        <td>{{ formatDate(item.reservationOpenDay) }}</td>
+                        <td>{{ item.reservationOpenDay }}일 전</td>
                         <td>{{ item.reservationOpenTime }}</td>
                         <td>
                             <span class="status" :class="{
-                                upcoming: isUpcoming(item.reservationOpenDay),
-                                closed: !isUpcoming(item.reservationOpenDay),
+                                upcoming: item.repeatEndDay && new Date(item.repeatEndDay) >= new Date(),
+                                closed: !item.repeatEndDay || new Date(item.repeatEndDay) < new Date(),
                             }">
-                                {{ isUpcoming(item.reservationOpenDay) ? "오픈예정" : "마감" }}
+                                {{ item.repeatEndDay && new Date(item.repeatEndDay) >= new Date() ? "오픈예정" : "마감" }}
                             </span>
                         </td>
                     </tr>
@@ -127,6 +127,7 @@ const fetchRoomsAndAvailableTimes = async () => {
 
         // 2. 각 회의실의 예약 가능 시간 조회
         const allTimes = []
+
         for (const room of rooms) {
             try {
                 const timesRes = await api.get(`/organizations/${organizationId.value}/rooms/${room.id}/available-times`)
@@ -136,10 +137,12 @@ const fetchRoomsAndAvailableTimes = async () => {
                 times.forEach(time => {
                     allTimes.push({
                         roomName: room.name,
-                        availableStartTime: time.available_start_time || time.availableStartTime,
-                        availableEndTime: time.available_end_time || time.availableEndTime,
-                        reservationOpenDay: time.reservation_open_day || time.reservationOpenDay,
-                        reservationOpenTime: time.reservation_open_time || time.reservationOpenTime
+                        availableStartTime: time.availableStartTime,
+                        availableEndTime: time.availableEndTime,
+                        reservationOpenDay: time.reservationOpenDay, // Integer: N일 전
+                        reservationOpenTime: time.reservationOpenTime,
+                        repeatStartDay: time.repeatStartDay,
+                        repeatEndDay: time.repeatEndDay
                     })
                 })
             } catch (err) {
@@ -166,7 +169,9 @@ const formatDate = (dateStr) => {
 const isUpcoming = (dateStr) => {
     if (!dateStr) return false;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const open = new Date(dateStr);
+    open.setHours(0, 0, 0, 0);
     return open >= today;
 };
 
