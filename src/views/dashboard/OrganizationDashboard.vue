@@ -117,45 +117,26 @@ async function loadDashboardData() {
       notices.value = []
     }
 
-    // 3. 조직 통계 로드 (구성원 수, 회의실 수)
+    // 3. 조직 통계 로드
     try {
-      // TODO: 실제 API 엔드포인트로 교체 필요
-      // const statsRes = await api.get(`/organizations/${organizationId.value}/stats`)
-      // org.value.memberCount = statsRes.data.memberCount
-      // org.value.roomCount = statsRes.data.roomCount
-
-      // 임시: 더미 데이터 사용
-      org.value.memberCount = 42
-      org.value.roomCount = 7
+      // 조직 통계 조회 - 구성원 수, 회의실 수 등
+      const statsRes = await api.get(`/organizations/${organizationId.value}/stats`)
+      console.log('조직 통계 조회 응답:', statsRes.data)
+      org.value.memberCount = statsRes.data.memberCount || 0
+      org.value.roomCount = statsRes.data.roomCount || 0
     } catch (err) {
-      console.error('통계 로드 실패:', err)
+      console.error('조직 통계 로드 실패:', err)
+      console.error('에러 상세:', err.response?.data)
+      org.value.memberCount = 0
+      org.value.roomCount = 0
     }
 
-    // 4. 오늘 예약 현황 로드
-    try {
-      // TODO: 실제 API 엔드포인트로 교체 필요
-      // const todayRes = await api.get(`/organizations/${organizationId.value}/reservations/today`)
-      // todayReservations.value = todayRes.data
-
-      // 임시: 더미 데이터
-      todayReservations.value = []
-    } catch (err) {
-      console.error('오늘 예약 로드 실패:', err)
-      todayReservations.value = []
-    }
-
-    // 5. 내 최근 예약 로드
-    try {
-      // TODO: 실제 API 엔드포인트로 교체 필요
-      // const myRes = await api.get(`/organizations/${organizationId.value}/reservations/my`)
-      // myReservations.value = myRes.data
-
-      // 임시: 더미 데이터
-      myReservations.value = []
-    } catch (err) {
-      console.error('내 예약 로드 실패:', err)
-      myReservations.value = []
-    }
+    // 오늘 예약, 내 최근 예약은 백엔드 API가 준비되면 추가 예정
+    // TODO: 백엔드에 다음 API 추가 필요
+    // - GET /organizations/{organizationId}/reservations/today (오늘 예약)
+    // - GET /organizations/{organizationId}/reservations/my/recent (내 최근 예약)
+    todayReservations.value = []
+    myReservations.value = []
 
   } catch (error) {
     console.error('대시보드 로드 실패:', error)

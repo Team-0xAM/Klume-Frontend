@@ -38,12 +38,6 @@
         <img :src="userIcon" alt="user" class="user-icon" />
         <span>{{ userName }}</span>
       </div>
-      <img
-        :src="logoutIcon"
-        alt="logout"
-        class="logout-icon"
-        @click="$emit('logout')"
-      />
     </div>
   </div>
 </template>
@@ -75,10 +69,7 @@ const props = defineProps({
     type: String,
     default: '/src/assets/icons/icon_user.png',
   },
-  logoutIcon: {
-    type: String,
-    default: '/src/assets/icons/icon_navigation.png',
-  },
+
   role: { type: String, default: 'MEMBER' },
 });
 
@@ -117,34 +108,32 @@ const profileImageStyle = computed(() => {
 <style scoped>
 .sidebar {
   width: 260px;
-  height: 100vh;
-  padding: 20px 16px;
+  min-height: 100vh;
+  padding: 16px 16px 12px;
   background-color: #ffffff;
   border-right: 1px solid #eaeaea;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 .sidebar-top {
-  flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  padding-bottom: 12px;
 }
 
 .profile-section {
   text-align: left;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .profile-image {
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   overflow: hidden;
 }
 
@@ -156,7 +145,7 @@ const profileImageStyle = computed(() => {
 
 .profile-initial {
   color: #0c1c54;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   user-select: none;
 }
@@ -164,33 +153,34 @@ const profileImageStyle = computed(() => {
 .profile-name {
   font-weight: 700;
   color: #0c1c54;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .menu-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 hr {
   border: none;
   border-top: 1px solid #eee;
-  margin: 16px 0;
+  margin: 10px 0;
 }
 
 .admin-menu-title {
   color: #0c1c54;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .bottom-user {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 10px;
+  padding-top: 12px;
+  margin-top: 16px;
   border-top: 1px solid #eee;
 }
 
