@@ -115,15 +115,22 @@ watch(
 
 .message-bubble {
   max-width: 60%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 10px 14px;
+  border-radius: 18px;
+  position: relative;
 }
 
-.my-message .message-bubble {
-  background-color: #0c1c54;
-  color: white;
+/* 상대방 메시지 (왼쪽) - 회색 배경 */
+.message-wrapper:not(.my-message) .message-bubble {
+  background-color: #f0f0f0 !important;
+  border-top-left-radius: 4px !important;
+}
+
+/* 내 메시지 (오른쪽) - 노란색 배경 */
+.message-wrapper.my-message .message-bubble {
+  background-color: #ffe812 !important;
+  color: #000 !important;
+  border-top-right-radius: 4px !important;
 }
 
 .message-header {
@@ -134,13 +141,13 @@ watch(
 }
 
 .sender-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #666;
 }
 
 .my-message .sender-name {
-  color: rgba(255, 255, 255, 0.8);
+  color: #333;
 }
 
 .admin-badge {
@@ -153,19 +160,20 @@ watch(
 }
 
 .my-message .admin-badge {
-  background-color: rgba(245, 200, 67, 0.9);
+  background-color: #ffa500;
+  color: white;
 }
 
 .message-content {
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
+  color: #000;
   word-wrap: break-word;
   white-space: pre-wrap;
 }
 
 .my-message .message-content {
-  color: white;
+  color: #000;
 }
 
 .message-time {
@@ -176,7 +184,7 @@ watch(
 }
 
 .my-message .message-time {
-  color: rgba(255, 255, 255, 0.7);
+  color: #666;
 }
 
 /* 스크롤바 스타일링 */

@@ -89,7 +89,21 @@
         <!-- 채팅 메시지 영역 -->
         <div v-else class="chat-content">
           <ChatMessageList :messages="messages || []" :current-user-id="currentUserEmail" />
-          <ChatInput @send="handleSendMessage" :disabled="!isConnected" />
+          <ChatInput
+            @send="handleSendMessage"
+            :disabled="!isConnected || !isMyAssignment"
+            :disabled-message="!isMyAssignment ? '내 담당 유저가 아닙니다. 채팅하려면 담당하기를 눌러주세요' : ''"
+          >
+            <template #action-button>
+              <button
+                v-if="!isMyAssignment"
+                @click="handleAssign(selectedRoom.roomId)"
+                class="notice-assign-button"
+              >
+                담당하기
+              </button>
+            </template>
+          </ChatInput>
         </div>
       </div>
     </div>
@@ -133,6 +147,14 @@ const filteredChatRooms = computed(() => {
   }
   // assignedToId로 필터링 (OrganizationMember ID로 비교)
   return chatRooms.value.filter(room => room.assignedToId === currentUserId.value)
+})
+
+// 현재 선택된 채팅방이 내 담당인지 확인
+const isMyAssignment = computed(() => {
+  if (!selectedRoom.value || !currentUserId.value) {
+    return false
+  }
+  return selectedRoom.value.assignedToId === currentUserId.value
 })
 
 // 채팅 관련 상태
@@ -221,6 +243,37 @@ const handleAssign = async (roomId) => {
   try {
     await assignChatRoom(organizationId.value, roomId)
     await loadChatRooms()
+
+    // 선택된 채팅방 정보 업데이트
+    const updatedRoom = chatRooms.value.find(room => room.roomId === roomId)
+    if (updatedRoom && selectedRoomId.value === roomId) {
+      selectedRoom.value = updatedRoom
+
+      // 채팅 재연결 (권한이 변경되었으므로)
+      if (chatInstance) {
+        chatInstance.disconnect()
+      }
+      chatInstance = useChat(organizationId.value, roomId, isAdmin.value)
+
+      // watch 재설정
+      watch(() => chatInstance.messages.value, (newMessages) => {
+        messages.value = newMessages
+      }, { deep: true, immediate: true })
+
+      watch(() => chatInstance.isConnected.value, (newValue) => {
+        isConnected.value = newValue
+      }, { immediate: true })
+
+      watch(() => chatInstance.isConnecting.value, (newValue) => {
+        isConnecting.value = newValue
+      }, { immediate: true })
+
+      watch(() => chatInstance.errorMessage.value, (newValue) => {
+        errorMessage.value = newValue
+      }, { immediate: true })
+
+      chatInstance.connect()
+    }
   } catch (error) {
     console.error('Failed to assign chat room:', error)
     alert('담당 지정에 실패했습니다.')
@@ -232,6 +285,20 @@ const handleUnassign = async (roomId) => {
   try {
     await unassignChatRoom(organizationId.value, roomId)
     await loadChatRooms()
+
+    // 선택된 채팅방 정보 업데이트
+    const updatedRoom = chatRooms.value.find(room => room.roomId === roomId)
+    if (updatedRoom && selectedRoomId.value === roomId) {
+      selectedRoom.value = updatedRoom
+
+      // 채팅 연결 해제 (더 이상 권한이 없음)
+      if (chatInstance) {
+        chatInstance.disconnect()
+        chatInstance = null
+      }
+      isConnected.value = false
+      errorMessage.value = '담당 해제되었습니다. 메시지를 보낼 수 없습니다.'
+    }
   } catch (error) {
     console.error('Failed to unassign chat room:', error)
     alert('담당 해제에 실패했습니다.')
@@ -422,6 +489,60 @@ onUnmounted(() => {
   color: #666;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.assign-button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.assign-button.assign {
+  background-color: #0c1c54;
+  color: white;
+}
+
+.assign-button.assign:hover {
+  background-color: #0a1540;
+}
+
+.assign-button.unassign {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.assign-button.unassign:hover {
+  background-color: #e0e0e0;
+}
+
+.notice-assign-button {
+  padding: 10px 24px;
+  background-color: #0c1c54;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.notice-assign-button:hover {
+  background-color: #15266b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(12, 28, 84, 0.3);
+}
 
 .status-message {
   flex: 1;
