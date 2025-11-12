@@ -62,26 +62,39 @@
         </tr>
       </tbody>
     </table>
-  </div>
-  <div v-if="showPhotoModal" class="modal-overlay" @click.self="closePhotoModal">
+
+    <!-- 이용 사진 모달 -->
+    <div v-if="showPhotoModal" class="modal-overlay" @click.self="closePhotoModal">
       <div class="modal-content">
         <button class="close-btn" @click="closePhotoModal">✕</button>
         <img :src="imageUrl" alt="이용 사진" />
       </div>
     </div>
+
+    <!-- 입장 모달 -->
+    <PhotoModal
+      :show="showEnterModal"
+      :organizationId="organizationId"
+      :reservationId="currentReservation?.reservationId"
+      @close="closeEnterModal"
+      @success="handleEnterSuccess"
+    />
+  </div>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
 import api from "@/api/axios";
 import { useRoute } from 'vue-router'
+import PhotoModal from "@/components/organization/PhotoModal.vue";
 
 const tabs = ["전체", "오늘", "예정", "지난"];
 const selectedTab = ref("전체");
 const reservations = ref([]);
 const showPhotoModal = ref(false);
-const imageUrl = ref(""); 
-
+const imageUrl = ref("");
+const showEnterModal = ref(false); 
+const currentReservation = ref(null); 
 
 const route = useRoute()
 const organizationId = Number(route.params.organizationId)
@@ -91,7 +104,6 @@ async function fetchMyReservations() {
     const res = await api.get(`/organizations/${organizationId}/reservations/my`, {
       withCredentials: true,
     });
-
     if (Array.isArray(res.data)) {
       reservations.value = res.data;
     } else {
@@ -108,16 +120,6 @@ function toDateTime(dateStr, timeStr) {
   return new Date(`${dateStr}T${timeStr}:00`);
 }
 
-function isToday(dateStr) {
-  const today = new Date();
-  const target = new Date(dateStr);
-  return (
-    today.getFullYear() === target.getFullYear() &&
-    today.getMonth() === target.getMonth() &&
-    today.getDate() === target.getDate()
-  );
-}
-
 function getStatus(r) {
   const now = new Date();
   const start = toDateTime(r.reservationDate, r.startTime);
@@ -126,44 +128,49 @@ function getStatus(r) {
   if (r.reservationStatus === "CANCELLED") return "취소됨";
   if (r.reservationStatus === "COMPLETED") return "이용 완료";
 
-  if (isToday(r.reservationDate)) {
+  if (r.reservationStatus === "UPCOMING") {
     if (end < now) return "이용 완료";
-    if (start > now) return "이용 예정";
     if (start <= now && now <= end) return "오늘 이용";
+    return "이용 예정";
   }
 
-  if (new Date(r.reservationDate) > now) return "이용 예정";
-  if (new Date(r.reservationDate) < now) return "이용 완료";
+  if (r.reservationStatus === "TODAY") {
+    if (end < now) return "이용 완료";
+    if (start <= now && now <= end) return "오늘 이용";
+    return "이용 예정";
+  }
+
+  if (r.reservationStatus === "IN_USE") {
+    return end < now ? "이용 완료" : "이용 중";
+  }
 
   return "이용 예정";
 }
 
 function getButtonText(r) {
+  const status = getStatus(r);
+
+  if (r.imageUrl) return "이용 사진 보기";
+
   const now = new Date();
   const start = toDateTime(r.reservationDate, r.startTime);
   const end = toDateTime(r.reservationDate, r.endTime);
-
-  const status = getStatus(r);
-
-  if (status === "이용 완료") return "이용 사진 보기";
-  if (status === "이용 예정") return "예약 취소";
   if (status === "오늘 이용" && start <= now && now <= end) return "입장하기";
+
+  if (status === "이용 완료" || status === "이용 중") return "이용 사진 보기";
+
+  if (status === "이용 예정") return "예약 취소";
 
   return null;
 }
 
 async function handleAction(item) {
   const action = getButtonText(item);
+
   if (action === "예약 취소") {
-    const confirmCancel = confirm("정말 예약을 취소하시겠습니까?");
-    if (!confirmCancel) return;
-
+    if (!confirm("정말 예약을 취소하시겠습니까?")) return;
     try {
-      await api.put(
-        `/organizations/${organizationId}/reservations/${item.reservationId}/cancel`,
-        { withCredentials: true }
-      );
-
+      await api.put(`/organizations/${organizationId}/reservations/${item.reservationId}/cancel`, { withCredentials: true });
       alert("예약이 취소되었습니다.");
       fetchMyReservations(); 
     } catch (err) {
@@ -173,19 +180,15 @@ async function handleAction(item) {
   }
 
   if (action === "입장하기") {
-    alert(`${item.roomName} 회의실에 입장합니다.`);
+    currentReservation.value = item;
+    showEnterModal.value = true;
   }
 
   if (action === "이용 사진 보기") {
     try {
-      const res = await api.get(
-        `/organizations/${organizationId}/reservations/${item.reservationId}/photo`,
-        { withCredentials: true }
-      );
-
+      const res = await api.get(`/organizations/${organizationId}/reservations/${item.reservationId}/photo`, { withCredentials: true });
       imageUrl.value = res.data; 
       showPhotoModal.value = true;
-
     } catch (err) {
       console.error("이용 사진 가져오기 실패:", err);
       alert("이용사진을 가져오는데 실패하였습니다.");
@@ -198,6 +201,15 @@ function closePhotoModal() {
   imageUrl.value = "";
 }
 
+function closeEnterModal() {
+  showEnterModal.value = false;
+  currentReservation.value = null;
+}
+
+function handleEnterSuccess() {
+  fetchMyReservations();
+}
+
 function compareDateOnly(a, b) {
   const aDate = new Date(a.getFullYear(), a.getMonth(), a.getDate());
   const bDate = new Date(b.getFullYear(), b.getMonth(), b.getDate());
@@ -206,7 +218,6 @@ function compareDateOnly(a, b) {
 
 const filteredReservations = computed(() => {
   const today = new Date();
-
   return reservations.value.filter((r) => {
     const date = new Date(r.reservationDate);
     const diff = compareDateOnly(date, today);
@@ -353,19 +364,21 @@ const filteredReservations = computed(() => {
 
 .modal-content {
   position: relative;
+  background-color: rgba(136, 136, 136, 0.6);
   border-radius: 12px;
-  max-width: 90%;
-  max-height: 90%;
-  padding: 50px 20px 20px 20px; 
+  width: 300px;       
+  height: 300px;      
+  padding: 20px; 
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: auto;
+  justify-content: center; 
+  align-items: center;     
+  overflow: hidden;         
 }
 
 .modal-content img {
   max-width: 100%;
-  max-height: 80vh;
+  max-height: 100%;
+  object-fit: contain; 
   border-radius: 8px;
 }
 
