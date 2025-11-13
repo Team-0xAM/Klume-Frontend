@@ -63,9 +63,9 @@
                         <td>
                             <span class="status" :class="{
                                 upcoming: isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
-                                closed: !isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
+                                done: !isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
                             }">
-                                {{ isReservationOpen(item.reservationOpenDay, item.reservationOpenTime) ? "오픈예정" : "마감" }}
+                                {{ isReservationOpen(item.reservationOpenDay, item.reservationOpenTime) ? "오픈예정" : "예약가능" }}
                             </span>
                         </td>
                     </tr>
@@ -177,7 +177,8 @@ const isReservationOpen = (openDay, openTime) => {
     const openDateTime = new Date(openDay);
     openDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-    // 현재 시간이 오픈 시간보다 이전이면 오픈예정
+    // 현재 시간이 오픈 시간 이후면 예약 가능 (오픈예정 아님 = false)
+    // 현재 시간이 오픈 시간 이전이면 아직 오픈예정 (true)
     return now < openDateTime;
 };
 
