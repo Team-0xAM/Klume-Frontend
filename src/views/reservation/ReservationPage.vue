@@ -131,7 +131,7 @@
                 class="reserve-btn available"
                 @click="handleReserve(item)"
               >
-                예약 가능
+                예약하기
               </button>
               <button 
                 v-else-if="item.status === 'AVAILABLE' && isTimePassed(item)"
@@ -169,12 +169,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { getRooms } from '@/api/room/roomApi'
-import api from '@/api/axios'
+import { createReservation, getAvailableTimes } from '@/api/reservation/reservationApi'
 
 const route = useRoute()
-const router = useRouter()
 const organizationId = Number(route.params.organizationId || 0)
 const rooms = ref([])
 const selectedRoomId = ref('')
@@ -217,16 +216,9 @@ async function fetchReservations() {
   if (!selectedRoomId.value || !selectedDate.value) return
   
   try {
-    const res = await api.get(
-      `/organizations/${organizationId}/reservations/status/day`,
-      {
-        params: { date: selectedDate.value },
-        withCredentials: true
-      }
-    )
+    const res = await getAvailableTimes(organizationId, selectedDate.value)
     
     if (Array.isArray(res.data)) {
-      // 선택된 회의실의 예약만 필터링
       reservations.value = res.data.filter(
         item => item.roomId === Number(selectedRoomId.value)
       )
@@ -237,6 +229,35 @@ async function fetchReservations() {
   } catch (err) {
     console.error('예약 현황을 불러오지 못했습니다:', err)
     reservations.value = []
+  }
+}
+
+// 예약하기
+async function handleReserve(item) {
+  const confirmReserve = confirm(
+    `${item.timeName} (${item.startTime} - ${item.endTime})을 예약하시겠습니까?`
+  )
+  
+  if (!confirmReserve) return
+  
+  try {
+    await createReservation(
+      organizationId,
+      item.roomId,
+      item.dailyAvailableTimeId
+    )
+    
+    alert('예약이 완료되었습니다.')
+    
+    await fetchReservations()
+  } catch (err) {
+    console.error('예약 실패:', err)
+    
+    if (err.response?.data?.message) {
+      alert(`예약 실패: ${err.response.data.message}`)
+    } else {
+      alert('예약 중 오류가 발생했습니다.')
+    }
   }
 }
 
@@ -373,7 +394,7 @@ function isOpeningSoon(item) {
   openDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
   
   const diff = openDate.getTime() - currentTime.value.getTime()
-  return diff > 0 && diff <= 3600000 // 1시간 = 3600000ms
+  return diff > 0 && diff <= 3600000
 }
 
 // 카운트다운 계산
@@ -412,7 +433,6 @@ function isTimePassed(item) {
     return selectedDateObj < today
   }
   
-  // 오늘인 경우 endTime 체크
   const [hours, minutes] = item.endTime.split(':')
   const endDateTime = new Date(selectedDate.value)
   endDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
@@ -420,12 +440,6 @@ function isTimePassed(item) {
   return currentTime.value >= endDateTime
 }
 
-// 예약하기 버튼 클릭
-function handleReserve(item) {
-  router.push(`/reservation/${item.roomId}?date=${selectedDate.value}`)
-}
-
-// 실시간 업데이트
 function startCountdown() {
   countdownInterval = setInterval(() => {
     currentTime.value = new Date()
