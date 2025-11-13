@@ -292,6 +292,7 @@ const filteredReservations = computed(() => {
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 20px;
+  color: #0B174E;
 }
 
 .tabs {

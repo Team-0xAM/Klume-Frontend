@@ -1,6 +1,6 @@
 <template>
   <div class="reservation-page">
-    <h2 class="page-title">예약하기</h2>
+    <h1 class="page-title">예약하기</h1>
 
     <div class="header-section">
       <!-- 회의실 선택 -->
