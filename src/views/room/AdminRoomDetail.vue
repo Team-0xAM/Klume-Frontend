@@ -3,10 +3,15 @@
     <!-- <Sidebar /> -->
 
     <div class="content">
+
+        <button class="back-btn" @click="goBack">
+            ← 목록으로 돌아가기
+        </button>
+
         <h2>회의실 자세히 보기</h2>
 
         <div class="detail-card">
-            <img :src="room.imageUrl || defaultImage" class="room-image" />
+            <img :src="room.imageUrl" class="room-image" />
 
         <div class="info">
             <div class="info-header">
@@ -85,12 +90,10 @@
 
 <script setup>
 import { ref, onMounted } from "vue"
-// import Sidebar from "@/components/layout/Sidebar.vue"
 import AddAvailableTimeModal from "@/components/room/AddAvailableTimeModal.vue"
-import { getRoomDetail, updateRoom, deleteRoom, createAvailableTime, getAvailableTimes, updateAvailableTime, deleteAvailableTime } from "@/api/room/roomApi.js"
+import { getRoomDetail, deleteRoom, createAvailableTime, getAvailableTimes, updateAvailableTime, deleteAvailableTime } from "@/api/room/roomApi.js"
 import { useRoute } from "vue-router"
 import EditRoomModal from "@/components/room/EditRoomModal.vue"
-import defaultImage from "@/assets/images/default-room.png"
 import EditAvailableTimeModal from '@/components/room/EditAvailableTimeModal.vue'
 import { useRouter } from "vue-router"
 
@@ -109,16 +112,6 @@ const showRoomEditModal = ref(false)
 
 const showTimeEditModal = ref(false)
 const selectedTime = ref(null)
-
-const dayMap = {
-    MON: "월",
-    TUE: "화",
-    WED: "수",
-    THU: "목",
-    FRI: "금",
-    SAT: "토",
-    SUN: "일",
-}
 
 function formatPeriod(start, end) {
     if (!start && !end) return '-'
@@ -156,14 +149,13 @@ function formatRepeatDays(days) {
     return days.map(d => map[d]).join(", ")
 }
 
-function openEditTimeModal(time) {
-    selectedTime.value = { ...time } // 수정 모달에서 바뀌어도 원본 영향 X
-    showEditTimeModal.value = true
-}
-
 function openTimeEditModal(time) {
     selectedTime.value = { ...time }
     showTimeEditModal.value = true
+}
+
+function goBack() {
+    router.push(`/organization/${organizationId}/admin/rooms`)
 }
 
 async function deleteRoomConfirm() {
@@ -533,4 +525,22 @@ onMounted(async () => {
     font-weight: 700;
     margin: 0;
 }
+
+.back-btn {
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    background: #fff;
+    border: 1px solid #002b87;
+    color: #002b87;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    background: #002b87;
+    color: #fff;
+}
+
 </style>
