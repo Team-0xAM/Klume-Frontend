@@ -63,9 +63,9 @@
                         <td>
                             <span class="status" :class="{
                                 upcoming: isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
-                                closed: !isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
+                                done: !isReservationOpen(item.reservationOpenDay, item.reservationOpenTime),
                             }">
-                                {{ isReservationOpen(item.reservationOpenDay, item.reservationOpenTime) ? "오픈예정" : "마감" }}
+                                {{ isReservationOpen(item.reservationOpenDay, item.reservationOpenTime) ? "오픈예정" : "예약가능" }}
                             </span>
                         </td>
                     </tr>
@@ -177,7 +177,8 @@ const isReservationOpen = (openDay, openTime) => {
     const openDateTime = new Date(openDay);
     openDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-    // 현재 시간이 오픈 시간보다 이전이면 오픈예정
+    // 현재 시간이 오픈 시간 이후면 예약 가능 (오픈예정 아님 = false)
+    // 현재 시간이 오픈 시간 이전이면 아직 오픈예정 (true)
     return now < openDateTime;
 };
 
@@ -187,13 +188,17 @@ const myReservations = ref([]);
 // 오늘 내 예약 조회
 const fetchMyTodayReservations = async () => {
     try {
-        const res = await api.get(`/organizations/${organizationId.value}/reservations/my/today`)
+        const res = await api.get(`/organizations/${organizationId.value}/reservations/my`)
         const data = Array.isArray(res.data) ? res.data : []
-        myReservations.value = data.map(item => ({
+
+        // reservationStatus가 'TODAY'인 것만 필터링
+        const todayReservations = data.filter(item => item.reservationStatus === 'TODAY')
+
+        myReservations.value = todayReservations.map(item => ({
             room: item.roomName || '회의실',
             time: `${item.startTime || ''} ~ ${item.endTime || ''}`,
-            status: item.status === 'CONFIRMED' ? '예약완료' : '대기중',
-            date: item.date ? new Date(item.date).toLocaleDateString('ko-KR') : ''
+            status: item.reservationStatus === 'CANCELLED' ? '취소됨' : '예약완료',
+            date: item.reservationDate || ''
         }))
     } catch (err) {
         console.error('오늘 내 예약 조회 실패:', err)

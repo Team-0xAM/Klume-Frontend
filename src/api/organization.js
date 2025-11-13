@@ -7,7 +7,7 @@ export const getMyOrganizations = () => {
 
 // 특정 조직 상세 조회
 export const getOrganizationById = (organizationId) => {
-  return apiClient.get(`/api/organizations/${organizationId}`)
+  return apiClient.get(`/organizations/${organizationId}`)
 }
 
 // 조직 생성

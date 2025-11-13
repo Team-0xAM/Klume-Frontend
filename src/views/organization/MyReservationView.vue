@@ -29,13 +29,13 @@
       <tbody>
         <tr v-for="(item, index) in filteredReservations" :key="index">
           <td>{{ item.roomName }}</td>
-          <td>{{ item.reservationDate }}</td>
+<td>{{ item.reservationDate.split(" ")[0] }}</td>
           <td>{{ item.startTime }} ~ {{ item.endTime }}</td>
           <td>
             <span
               class="status"
               :class="{
-                today: getStatus(item) === '지금 이용',
+                today: getStatus(item) === '입장 가능',
                 upcoming: getStatus(item) === '이용 예정',
                 done: getStatus(item) === '이용 완료',
                 ongoing: getStatus(item) === '이용 중',
@@ -132,11 +132,13 @@ async function fetchMyReservations() {
 fetchMyReservations();
 
 function toDateTime(dateStr, timeStr) {
-  return new Date(`${dateStr}T${timeStr}:00`);
+  const dateOnly = dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr;
+  return new Date(`${dateOnly}T${timeStr}:00`);
 }
 
 function getStatus(r) {
   const now = new Date();
+
   const start = toDateTime(r.reservationDate, r.startTime);
   const end = toDateTime(r.reservationDate, r.endTime);
 

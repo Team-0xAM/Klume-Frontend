@@ -5,7 +5,7 @@
       <div class="chat-list-header">
         <h2 class="page-title">{{ selectedRoom ? (selectedRoom.assignedToName || '미배정') : '채팅 문의' }}</h2>
         <div class="header-info" v-if="selectedRoom">
-          <span class="participant-label">{{ selectedRoom.createdByEmail }}</span>
+          <span class="participant-label">{{ selectedRoom.assignedToEmail || '미배정' }}</span>
         </div>
       </div>
 
@@ -66,7 +66,7 @@
         <!-- 채팅방 헤더 -->
         <div class="chat-header">
           <div class="header-left">
-            <h2 class="chat-title">{{ selectedRoom.assignedToName || '미배정' }}</h2>
+            <h2 class="chat-title">{{ selectedRoom.createdByName || '알 수 없음' }}</h2>
             <div class="chat-info">
               <span class="participant-info">{{ selectedRoom.createdByEmail }}</span>
             </div>
