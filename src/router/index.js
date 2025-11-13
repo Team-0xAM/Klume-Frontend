@@ -16,7 +16,7 @@ import OrganizationView from "@/views/OrganizationView.vue";
 import OrganizationCreateView from "@/views/OrganizationCreateView.vue";
 import OrganizationJoinView from "@/views/OrganizationJoinView.vue";
 import OrganizationJoinWithCodeView from "@/views/OrganizationJoinWithCodeView.vue";
-import OrganizationMemberHomeView from "@/views/OrganizationMemberHomeView.vue"; // ✅ 너의 브랜치 추가
+import OrganizationMemberHomeView from "@/views/OrganizationMemberHomeView.vue"; // 너의 브랜치 추가
 
 // --- 채팅 및 공지 ---
 import ChatRoomListView from "@/views/ChatRoomListView.vue";
@@ -51,7 +51,6 @@ import userhome from "@/views/test/userhome.vue";
 // --- 에러 / 예외 뷰 ---
 import ForbiddenView from "@/views/error/ForbiddenView.vue";
 
-
 // --- Routes 설정 ---
 const routes = [
   // 공용
@@ -70,7 +69,7 @@ const routes = [
   { path: "/organization/create", component: OrganizationCreateView, meta: { requiresAuth: true } },
   { path: "/organization/join", component: OrganizationJoinWithCodeView, meta: { requiresAuth: true } },
 
-  // ✅ 사용자 홈 라우트 추가
+  // 사용자 홈 라우트 추가
   {
     path: "/organization/:organizationId/home",
     name: "OrganizationMemberHome",
@@ -100,13 +99,21 @@ const routes = [
       },
       {
         path: "admin/rooms",
+
+        name: "AdminRoomList",
+
         name: "AdminRoomListNested",
+
         component: AdminRoomPage,
         meta: { requiresAdmin: true },
       },
       {
         path: "admin/rooms/:roomId",
+
+        name: "AdminRoomDetail",
+
         name: "AdminRoomDetailNested",
+
         component: AdminRoomDetail,
         meta: { requiresAdmin: true },
       },
@@ -154,13 +161,11 @@ const routes = [
   { path: "/403", name: "Forbidden", component: ForbiddenView },
 ];
 
-
 // --- Router 생성 ---
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
-
 
 // --- 라우터 가드 ---
 router.beforeEach(async (to, from, next) => {
