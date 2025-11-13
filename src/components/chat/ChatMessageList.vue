@@ -77,15 +77,20 @@ const isAtBottom = () => {
   if (!messageContainer.value) return false
   const threshold = 50 // 50px 이내면 맨 아래로 간주
   const { scrollTop, scrollHeight, clientHeight } = messageContainer.value
+  console.log('[isAtBottom] scrollTop:', scrollTop, 'scrollHeight:', scrollHeight, 'clientHeight:', clientHeight, 'distance from bottom:', scrollHeight - scrollTop - clientHeight)
   return scrollHeight - scrollTop - clientHeight < threshold
 }
 
 // 스크롤을 맨 아래로 이동하는 함수
 const scrollToBottom = () => {
   nextTick(() => {
-    if (messageContainer.value && !isUserScrolling.value) {
-      messageContainer.value.scrollTop = messageContainer.value.scrollHeight
-    }
+        // if (messageContainer.value && !isUserScrolling.value) {
+    const el = messageContainer.value
+    if (!el) return
+    console.log('[scrollToBottom] Before - scrollTop:', el.scrollTop, 'scrollHeight:', el.scrollHeight, 'clientHeight:', el.clientHeight)
+    el.scrollTop = el.scrollHeight
+    console.log('[scrollToBottom] After - scrollTop:', el.scrollTop)
+        // }
   })
 }
 
@@ -125,7 +130,8 @@ onMounted(() => {
 
 <style scoped>
 .chat-message-list {
-  flex: 1;
+  /* flex: 1; */
+  height: 850px;       /* 임시 고정 높이 */
   overflow-y: auto;
   padding: 20px;
   display: flex;
