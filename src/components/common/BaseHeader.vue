@@ -1,21 +1,24 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { isAuthenticated, getUserEmail, logout } from '@/utils/auth'
+import { isAuthenticated, getUserEmail, getProfileImage, logout } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
 const isLoggedIn = ref(false)
 const userEmail = ref('')
+const profileImage = ref('')
 const showLogoutModal = ref(false)
 
 // 로그인 상태 확인 함수
 const checkAuthStatus = () => {
   const authenticated = isAuthenticated()
   const email = getUserEmail()
+  const image = getProfileImage()
 
   isLoggedIn.value = authenticated
   userEmail.value = email || ''
+  profileImage.value = image || ''
 }
 
 // 컴포넌트 마운트 시 체크
@@ -29,7 +32,7 @@ watch(() => route.path, () => {
 }, { immediate: true })
 
 // localStorage 변경 감지 (같은 탭에서 로그인 시)
-watch(() => [isAuthenticated(), getUserEmail()], () => {
+watch(() => [isAuthenticated(), getUserEmail(), getProfileImage()], () => {
   checkAuthStatus()
 })
 
@@ -82,7 +85,10 @@ const handleLogout = () => {
       <!-- 로그인 된 상태 -->
       <div v-else class="user-info" @click="showLogoutModal = true">
         <div class="profile-image">
-          <span class="profile-initial">{{ getInitial(userEmail) }}</span>
+          <!-- 구글 프로필 이미지가 있으면 이미지 표시 -->
+          <img v-if="profileImage" :src="profileImage" alt="Profile" class="profile-img" />
+          <!-- 없으면 이메일 첫글자 표시 -->
+          <span v-else class="profile-initial">{{ getInitial(userEmail) }}</span>
         </div>
         <span class="user-email">{{ userEmail }}</span>
       </div>
@@ -169,6 +175,14 @@ const handleLogout = () => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(12, 28, 84, 0.15);
+  overflow: hidden;
+}
+
+.profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .profile-initial {

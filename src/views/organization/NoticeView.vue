@@ -38,7 +38,7 @@
 
     <!-- 공지사항 상세 -->
     <div v-else class="notice-detail">
-      <button class="back-btn" @click="selectedNotice = null">← 목록으로</button>
+      <button class="back-btn" @click="backToList">← 목록으로</button>
       <h2 class="detail-title">{{ selectedNotice.title }}</h2>
       <div class="detail-meta">
         <span>작성자: {{ selectedNotice.authorName }}</span>
@@ -50,11 +50,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getNotices, getNoticeById } from '@/api/notice'
 
 const route = useRoute()
+const router = useRouter()
 const organizationId = Number(route.params.organizationId)
 
 const notices = ref([])
@@ -92,12 +93,42 @@ async function viewNoticeDetail(noticeId) {
   try {
     const { data } = await getNoticeById(organizationId, noticeId)
     selectedNotice.value = data
+    // URL 업데이트
+    router.push({
+      name: 'NoticeDetail',
+      params: { organizationId, noticeId }
+    })
   } catch (err) {
     console.error('공지사항 상세 조회 실패:', err)
   }
 }
 
-onMounted(fetchNotices)
+// 목록으로 돌아가기
+function backToList() {
+  selectedNotice.value = null
+  router.push({
+    name: 'NoticePage',
+    params: { organizationId }
+  })
+}
+
+onMounted(async () => {
+  await fetchNotices()
+
+  // URL에 noticeId가 있으면 상세 페이지 표시
+  if (route.params.noticeId) {
+    await viewNoticeDetail(Number(route.params.noticeId))
+  }
+})
+
+// URL 파라미터 변경 감지
+watch(() => route.params.noticeId, async (newNoticeId) => {
+  if (newNoticeId) {
+    await viewNoticeDetail(Number(newNoticeId))
+  } else {
+    selectedNotice.value = null
+  }
+})
 </script>
 
 <style scoped>
