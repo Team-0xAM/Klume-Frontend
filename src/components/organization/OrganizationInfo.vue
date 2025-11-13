@@ -63,6 +63,7 @@ const previewUrl = ref('')
 const imageFile = ref(null)
 const fileInput = ref(null)
 const isEditing = ref(false)
+const isImageEdited = ref(false)
 
 // 조직 정보 조회
 onMounted(async () => {
@@ -84,11 +85,13 @@ const toggleEdit = (value) => {
 
 // 파일 업로드
 const onUploadClick = () => fileInput.value.click()
+
 const onFileChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
     imageFile.value = file
     previewUrl.value = URL.createObjectURL(file)
+    isImageEdited.value = true
 }
 
 // 이미지 제거
@@ -96,6 +99,7 @@ const removeImage = () => {
     imageFile.value = null
     previewUrl.value = ''
     fileInput.value.value = ''
+    isImageEdited.value = true
 }
 
 // 수정 취소
@@ -104,6 +108,7 @@ const cancelEdit = () => {
     form.description = original.description
     previewUrl.value = original.imageUrl || ''
     imageFile.value = null
+    isImageEdited.value = false
     toggleEdit(false)
 }
 
@@ -114,6 +119,8 @@ const onSubmit = async () => {
         return
     }
 
+    console.log(isImageEdited.value);
+
     const formData = new FormData()
 
     if (imageFile.value) formData.append('image', imageFile.value)
@@ -121,7 +128,7 @@ const onSubmit = async () => {
     // 조직 정보 DTO
     formData.append(
         'requestDTO',
-        new Blob([JSON.stringify({ name: form.name, description: form.description })], {
+        new Blob([JSON.stringify({ name: form.name, description: form.description, imageEdited: isImageEdited.value, imageUrl: original.imageUrl })], {
             type: 'application/json',
         })
     )
@@ -132,6 +139,9 @@ const onSubmit = async () => {
         })
         alert('조직 정보가 수정되었습니다.')
         Object.assign(original, res.data)
+        previewUrl.value = res.data.imageUrl || ''
+        imageFile.value = null
+        isImageEdited.value = false
         toggleEdit(false)
     } catch (e) {
         console.error('조직 정보 수정 실패:', e)
