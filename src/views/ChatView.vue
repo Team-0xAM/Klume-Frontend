@@ -54,6 +54,7 @@
 
             <ChatInput
               @send="handleSendMessage"
+              @sendWithImage="handleSendWithImage"
               :disabled="!isConnected"
             />
           </div>
@@ -69,7 +70,7 @@ import { useRoute } from 'vue-router'
 import SideBar from '../components/common/SideBar.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
-import { useChat } from '../api/chat'
+import { useChat, uploadChatImage } from '../api/chat'
 
 const route = useRoute()
 
@@ -99,6 +100,28 @@ const handleSendMessage = (content) => {
   const success = sendMessage(content)
   if (!success) {
     console.error('Failed to send message')
+  }
+}
+
+// 이미지와 함께 메시지 전송
+const handleSendWithImage = async ({ content, image }) => {
+  if (!isConnected.value) {
+    return
+  }
+
+  try {
+    // 1. 이미지 업로드
+    const response = await uploadChatImage(image)
+    const imageUrl = response.data.imageUrl
+
+    // 2. WebSocket으로 메시지 전송 (이미지 URL 포함)
+    const success = sendMessage(content, imageUrl)
+    if (!success) {
+      throw new Error('메시지 전송 실패')
+    }
+  } catch (error) {
+    console.error('Failed to send message with image:', error)
+    errorMessage.value = '이미지 전송에 실패했습니다.'
   }
 }
 

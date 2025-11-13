@@ -87,6 +87,8 @@ const routes = [
       { path: "notices", name: "NoticePage", component: NoticeView },
       { path: "notices/:noticeId", name: "NoticeDetail", component: NoticeView },
       { path: "dashboard", name: "OrganizationDashboardExternal", component: DashboardMain },
+      { path: "chat", name: "ChatRoomList", component: ChatRoomListView },
+      { path: "chat/:roomId", name: "ChatRoom", component: ChatView },
       {
         path: "admin/reservations",
         name: "AdminReservationManage",

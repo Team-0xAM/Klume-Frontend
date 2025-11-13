@@ -12,8 +12,8 @@
       <div class="divider"></div>
 
       <div class="filter-tabs">
-        <button class="filter-tab active">반별 톡</button>
-        <button class="filter-tab">홈로드</button>
+        <button class="filter-tab active">내 담당 채팅</button>
+        <button class="filter-tab">미배정 채팅</button>
       </div>
 
       <div class="search-bar">
@@ -27,8 +27,8 @@
       </div>
 
       <!-- 에러 상태 -->
-      <div v-else-if="errorMessage" class="status-message error">
-        <p>{{ errorMessage }}</p>
+      <div v-else-if="roomListErrorMessage" class="status-message error">
+        <p>{{ roomListErrorMessage }}</p>
         <button @click="loadChatRooms" class="retry-button">다시 시도</button>
       </div>
 
@@ -71,32 +71,40 @@
               <span class="participant-info">{{ selectedRoom.createdByEmail }}</span>
             </div>
           </div>
-
-          <div class="header-actions">
-            <div class="header-tabs">
-              <button class="tab-button active">반별 톡</button>
-              <button class="tab-button">홈로드</button>
-            </div>
-          </div>
         </div>
 
         <div class="divider"></div>
 
         <!-- 로딩 상태 -->
-        <div v-if="chatLoading" class="status-message">
+        <div v-if="isConnecting" class="status-message">
           <p>채팅을 불러오는 중...</p>
         </div>
 
         <!-- 에러 상태 -->
-        <div v-else-if="chatErrorMessage" class="status-message error">
-          <p>{{ chatErrorMessage }}</p>
+        <div v-else-if="errorMessage" class="status-message error">
+          <p>{{ errorMessage }}</p>
           <button @click="reconnect" class="retry-button">다시 연결</button>
         </div>
 
         <!-- 채팅 메시지 영역 -->
         <div v-else class="chat-content">
-          <ChatMessageList :messages="messages" :current-user-id="currentUserEmail" />
-          <ChatInput @send="handleSendMessage" :disabled="!isConnected" />
+          <ChatMessageList :messages="messages || []" :current-user-id="currentUserEmail" />
+          <ChatInput
+            @send="handleSendMessage"
+            @sendWithImage="handleSendWithImage"
+            :disabled="!isConnected || !isMyAssignment"
+            :disabled-message="!isMyAssignment ? '내 담당 유저가 아닙니다. 채팅하려면 담당하기를 눌러주세요' : ''"
+          >
+            <template #action-button>
+              <button
+                v-if="!isMyAssignment"
+                @click="handleAssign(selectedRoom.roomId)"
+                class="notice-assign-button"
+              >
+                담당하기
+              </button>
+            </template>
+          </ChatInput>
         </div>
       </div>
     </div>
@@ -104,28 +112,56 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
-import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
-import { fetchOrganizationInfo, organizationRole } from '@/composables/useOrganization.js'
+import { getChatRooms, assignChatRoom, unassignChatRoom, useChat, uploadChatImage } from '../api/chat'
+import { organizationRole } from '@/composables/useOrganization.js'
+import api from '../api/axios'
 
 const route = useRoute()
 
 // 조직 ID (라우트에서 가져오기)
 const organizationId = ref(parseInt(route.params.organizationId) || 1)
 
+// JWT 토큰에서 이메일 추출하는 함수
+const getEmailFromToken = () => {
+  try {
+    const token = localStorage.getItem('accessToken')
+    if (!token) return ''
+
+    // JWT 토큰의 payload 부분 디코딩
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    }).join(''))
+
+    const payload = JSON.parse(jsonPayload)
+    return payload.sub || payload.email || ''
+  } catch (error) {
+    console.error('JWT 파싱 에러:', error)
+    return ''
+  }
+}
+
 // 사용자 정보
-const currentUserEmail = ref(localStorage.getItem('email') || '')
+const currentUserEmail = ref(localStorage.getItem('email') || getEmailFromToken())
 const currentUserId = ref(null) // OrganizationMember ID - 하드코딩(임시) API에서 가져와야 함
 const isAdmin = computed(() => organizationRole.value === 'ADMIN') // 역할에서 관리자 여부 확인
+
+// 디버깅: currentUserEmail 확인
+console.log('=== ChatRoomListView 초기화 ===')
+console.log('localStorage.email:', localStorage.getItem('email'))
+console.log('localStorage.accessToken:', localStorage.getItem('accessToken') ? '있음' : '없음')
+console.log('currentUserEmail:', currentUserEmail.value)
 
 // 채팅방 목록
 const chatRooms = ref([])
 const isLoading = ref(false)
-const errorMessage = ref('')
+const roomListErrorMessage = ref('')
 const showOnlyMyChats = ref(false)
 
 // 선택된 채팅방
@@ -141,24 +177,34 @@ const filteredChatRooms = computed(() => {
   return chatRooms.value.filter(room => room.assignedToId === currentUserId.value)
 })
 
+// 현재 선택된 채팅방이 내 담당인지 확인
+const isMyAssignment = computed(() => {
+  if (!selectedRoom.value || !currentUserId.value) {
+    return false
+  }
+  return selectedRoom.value.assignedToId === currentUserId.value
+})
+
 // 채팅 관련 상태
-let chatInstance = null
 const messages = ref([])
 const isConnected = ref(false)
-const chatLoading = ref(false)
-const chatErrorMessage = ref('')
+const isConnecting = ref(false)
+const errorMessage = ref('')
+const isSending = ref(false)
+let chatInstance = null
 
 // 채팅방 목록 로드
 const loadChatRooms = async () => {
   isLoading.value = true
-  errorMessage.value = ''
+  roomListErrorMessage.value = ''
 
   try {
     const response = await getChatRooms(organizationId.value)
+    console.log('=== 채팅방 목록 응답 ===', response.data)
     chatRooms.value = response.data || []
   } catch (error) {
     console.error('Failed to load chat rooms:', error)
-    errorMessage.value = '채팅방 목록을 불러오는데 실패했습니다.'
+    roomListErrorMessage.value = '채팅방 목록을 불러오는데 실패했습니다.'
   } finally {
     isLoading.value = false
   }
@@ -166,6 +212,11 @@ const loadChatRooms = async () => {
 
 // 채팅방 선택
 const selectChatRoom = (room) => {
+  console.log('=== 채팅방 선택 ===', room)
+  console.log('현재 사용자 OrganizationMember ID:', currentUserId.value)
+  console.log('채팅방 assignedToId:', room.assignedToId)
+  console.log('isAdmin:', isAdmin.value)
+
   selectedRoomId.value = room.roomId
   selectedRoom.value = room
 
@@ -177,11 +228,34 @@ const selectChatRoom = (room) => {
   // 새 채팅 연결 - isAdmin 파라미터 전달
   chatInstance = useChat(organizationId.value, room.roomId, isAdmin.value)
 
-  // ref를 직접 할당하여 반응성 유지
-  messages = chatInstance.messages
-  isConnected = chatInstance.isConnected
-  chatLoading = chatInstance.isConnecting
-  chatErrorMessage = chatInstance.errorMessage
+  // watch를 사용해서 chatInstance의 ref들을 동기화
+  watch(() => chatInstance.messages.value, (newMessages, oldMessages) => {
+    messages.value = newMessages
+
+    // 새 메시지가 추가되었을 때 채팅방 목록 업데이트
+    if (newMessages.length > 0 && (!oldMessages || newMessages.length > oldMessages.length)) {
+      const lastMessage = newMessages[newMessages.length - 1]
+      const roomIndex = chatRooms.value.findIndex(r => r.roomId === room.roomId)
+      if (roomIndex !== -1) {
+        chatRooms.value[roomIndex].lastMessageContent = lastMessage.content
+        chatRooms.value[roomIndex].lastMessageAt = lastMessage.createdAt
+      }
+    }
+  }, { deep: true, immediate: true })
+
+  watch(() => chatInstance.isConnected.value, (newValue) => {
+    isConnected.value = newValue
+  }, { immediate: true })
+
+  watch(() => chatInstance.isConnecting.value, (newValue) => {
+    isConnecting.value = newValue
+  }, { immediate: true })
+
+  watch(() => chatInstance.errorMessage.value, (newValue) => {
+    errorMessage.value = newValue
+  }, { immediate: true })
+
+  console.log('=== 초기 메시지 ===', chatInstance.messages.value)
 
   // 웹소켓 연결
   chatInstance.connect()
@@ -191,6 +265,49 @@ const selectChatRoom = (room) => {
 const handleSendMessage = (content) => {
   if (chatInstance) {
     chatInstance.sendMessage(content)
+
+    // 채팅방 목록의 마지막 메시지 즉시 업데이트
+    if (selectedRoom.value) {
+      const roomIndex = chatRooms.value.findIndex(r => r.roomId === selectedRoom.value.roomId)
+      if (roomIndex !== -1) {
+        chatRooms.value[roomIndex].lastMessageContent = content
+        chatRooms.value[roomIndex].lastMessageAt = new Date().toISOString()
+      }
+    }
+  }
+}
+
+// 이미지와 함께 메시지 전송
+const handleSendWithImage = async ({ content, image }) => {
+  if (!chatInstance || !isConnected.value || isSending.value) {
+    return
+  }
+
+  isSending.value = true
+  try {
+    // 1. 이미지를 서버에 업로드
+    const response = await uploadChatImage(image)
+    const imageUrl = response.data.imageUrl
+
+    // 2. WebSocket을 통해 이미지 URL과 함께 메시지 전송
+    const success = chatInstance.sendMessage(content, imageUrl)
+    if (!success) {
+      throw new Error('메시지 전송 실패')
+    }
+
+    // 3. 채팅방 목록의 마지막 메시지 즉시 업데이트
+    if (selectedRoom.value) {
+      const roomIndex = chatRooms.value.findIndex(r => r.roomId === selectedRoom.value.roomId)
+      if (roomIndex !== -1) {
+        chatRooms.value[roomIndex].lastMessageContent = content || '이미지'
+        chatRooms.value[roomIndex].lastMessageAt = new Date().toISOString()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to send message with image:', error)
+    errorMessage.value = '이미지 전송에 실패했습니다.'
+  } finally {
+    isSending.value = false
   }
 }
 
@@ -209,6 +326,37 @@ const handleAssign = async (roomId) => {
   try {
     await assignChatRoom(organizationId.value, roomId)
     await loadChatRooms()
+
+    // 선택된 채팅방 정보 업데이트
+    const updatedRoom = chatRooms.value.find(room => room.roomId === roomId)
+    if (updatedRoom && selectedRoomId.value === roomId) {
+      selectedRoom.value = updatedRoom
+
+      // 채팅 재연결 (권한이 변경되었으므로)
+      if (chatInstance) {
+        chatInstance.disconnect()
+      }
+      chatInstance = useChat(organizationId.value, roomId, isAdmin.value)
+
+      // watch 재설정
+      watch(() => chatInstance.messages.value, (newMessages) => {
+        messages.value = newMessages
+      }, { deep: true, immediate: true })
+
+      watch(() => chatInstance.isConnected.value, (newValue) => {
+        isConnected.value = newValue
+      }, { immediate: true })
+
+      watch(() => chatInstance.isConnecting.value, (newValue) => {
+        isConnecting.value = newValue
+      }, { immediate: true })
+
+      watch(() => chatInstance.errorMessage.value, (newValue) => {
+        errorMessage.value = newValue
+      }, { immediate: true })
+
+      chatInstance.connect()
+    }
   } catch (error) {
     console.error('Failed to assign chat room:', error)
     alert('담당 지정에 실패했습니다.')
@@ -220,17 +368,40 @@ const handleUnassign = async (roomId) => {
   try {
     await unassignChatRoom(organizationId.value, roomId)
     await loadChatRooms()
+
+    // 선택된 채팅방 정보 업데이트
+    const updatedRoom = chatRooms.value.find(room => room.roomId === roomId)
+    if (updatedRoom && selectedRoomId.value === roomId) {
+      selectedRoom.value = updatedRoom
+
+      // 채팅 연결 해제 (더 이상 권한이 없음)
+      if (chatInstance) {
+        chatInstance.disconnect()
+        chatInstance = null
+      }
+      isConnected.value = false
+      errorMessage.value = '담당 해제되었습니다. 메시지를 보낼 수 없습니다.'
+    }
   } catch (error) {
     console.error('Failed to unassign chat room:', error)
     alert('담당 해제에 실패했습니다.')
   }
 }
 
+// 현재 사용자의 OrganizationMember ID 가져오기
+const loadCurrentUserId = async () => {
+  try {
+    const response = await api.get(`/organizations/${organizationId.value}/members/me`)
+    currentUserId.value = response.data.organizationMemberId
+    console.log('현재 사용자 OrganizationMember ID:', currentUserId.value)
+  } catch (error) {
+    console.error('Failed to load current user ID:', error)
+  }
+}
+
 // 컴포넌트 마운트 시 목록 로드
 onMounted(async () => {
-  // 조직 정보 로드
-  await fetchOrganizationInfo(organizationId.value)
-  // 채팅방 목록 로드
+  await loadCurrentUserId()
   loadChatRooms()
 })
 
@@ -401,37 +572,59 @@ onUnmounted(() => {
   color: #666;
 }
 
-.header-actions {
+.header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
-.header-tabs {
-  display: flex;
-  gap: 8px;
-}
-
-.tab-button {
+.assign-button {
   padding: 8px 20px;
   border: none;
-  background-color: transparent;
-  color: #666;
+  border-radius: 8px;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 20px;
   transition: all 0.2s;
 }
 
-.tab-button.active {
+.assign-button.assign {
   background-color: #0c1c54;
   color: white;
 }
 
-.tab-button:not(.active):hover {
-  background-color: #f0f0f0;
+.assign-button.assign:hover {
+  background-color: #0a1540;
+}
+
+.assign-button.unassign {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.assign-button.unassign:hover {
+  background-color: #e0e0e0;
+}
+
+.notice-assign-button {
+  padding: 10px 24px;
+  background-color: #0c1c54;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.notice-assign-button:hover {
+  background-color: #15266b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(12, 28, 84, 0.3);
 }
 
 .status-message {

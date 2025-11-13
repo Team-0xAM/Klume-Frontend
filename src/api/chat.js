@@ -80,6 +80,20 @@ export const getChatHistory = (organizationId, roomId) => {
   return api.get(`/organizations/${organizationId}/chat-rooms/${roomId}/messages`)
 }
 
+/**
+ * 채팅 이미지 업로드
+ * @param {File} imageFile - 업로드할 이미지 파일
+ * @returns {Promise} 이미지 URL
+ */
+export const uploadChatImage = (imageFile) => {
+  const formData = new FormData()
+  formData.append('image', imageFile)
+
+  return api.post('/my-chats/upload-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
 // ==================== WebSocket Composable 파트  ====================
 
 /**
@@ -134,7 +148,9 @@ export const useChat = (organizationId, roomId, isAdmin) => {
     errorMessage.value = ''
 
     const onMessageReceived = (message) => {
+      console.log('=== onMessageReceived 콜백 실행 ===', message)
       messages.value.push(message)
+      console.log('=== messages 배열에 추가 완료 ===', messages.value.length)
     }
 
     const onConnected = () => {
@@ -166,21 +182,22 @@ export const useChat = (organizationId, roomId, isAdmin) => {
     }
   }
 
-  const sendMessage = (content) => {
+  const sendMessage = (content, imageUrl = null) => {
     if (!isConnected.value) {
       console.error('Cannot send message: not connected')
       return false
     }
 
-    if (!content || !content.trim()) {
+    if (!content && !imageUrl) {
       console.error('Cannot send empty message')
       return false
     }
 
     const messageData = {
       roomId: roomId,
-      content: content.trim(),
-      isAdmin: isAdmin // API 가이드에 따라 isAdmin 필드 사용
+      content: content ? content.trim() : '',
+      imageUrl: imageUrl,
+      admin: isAdmin // 백엔드 MessageRequestDTO의 admin 필드에 맞춤
     }
 
     publishMessage(client, messageData)

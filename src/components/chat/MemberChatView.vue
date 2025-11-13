@@ -36,17 +36,22 @@
 
       <!-- 입력 영역 -->
       <div class="input-container">
-        <ChatInput @send="handleSendMessage" :disabled="!isConnected || isSending" />
+        <ChatInput
+          @send="handleSendMessage"
+          @sendWithImage="handleSendWithImage"
+          :disabled="!isConnected || isSending"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import ChatMessageList from './ChatMessageList.vue'
 import ChatInput from './ChatInput.vue'
-import { getOrCreateMyChatRoom, getMyChatMessages, useChat } from '@/api/chat'
+import { getOrCreateMyChatRoom, getMyChatMessages, useChat, uploadChatImage } from '@/api/chat'
+import { getUserEmail } from '@/utils/auth'
 
 const props = defineProps({
   organization: {
@@ -56,7 +61,7 @@ const props = defineProps({
   }
 })
 
-const currentUserEmail = ref(localStorage.getItem('email') || '')
+const currentUserEmail = ref(getUserEmail() || '')
 
 // 상태
 const chatRoom = ref(null) // { roomId, organizationId, createdById, assignedToId, ... }
@@ -66,8 +71,8 @@ const isSending = ref(false)
 
 // 채팅 인스턴스
 let chatInstance = null
-const messages = ref([])
-const isConnected = ref(false)
+let messages = ref([])
+let isConnected = ref(false)
 
 // 조직명 이니셜
 const getInitial = (name) => {
@@ -82,22 +87,21 @@ const initializeChat = async () => {
 
   try {
     // 1. 채팅방 조회/생성 API 호출
-    // TODO: 이미 채팅방이 있는 경우 content가 필요 없도록 백엔드 수정 필요
-    // 현재는 임시 메시지를 보내지만, 채팅방이 이미 있으면 메시지가 생성되지 않음 (백엔드에서 처리)
     const response = await getOrCreateMyChatRoom(props.organization.organizationId, '안녕하세요, 문의 드립니다.')
     chatRoom.value = response.data
 
     // 2. 메시지 히스토리 로드
     const historyResponse = await getMyChatMessages(chatRoom.value.roomId)
-    messages.value = historyResponse.data || []
 
     // 3. WebSocket 연결
-    chatInstance = useChat(props.organization.organizationId, chatRoom.value.roomId, false) // isAdmin = false
-    messages.value = chatInstance.messages // 반응성 유지
-    isConnected.value = chatInstance.isConnected
+    chatInstance = useChat(props.organization.organizationId, chatRoom.value.roomId, false)
 
-    // 메시지 히스토리를 직접 설정
-    chatInstance.messages.value = messages.value
+    // 메시지 히스토리를 chatInstance에 설정
+    chatInstance.messages.value = historyResponse.data || []
+
+    // chatInstance의 ref를 직접 참조 (반응성 유지)
+    messages = chatInstance.messages
+    isConnected = chatInstance.isConnected
 
     // WebSocket 연결 시작
     await chatInstance.connect()
@@ -124,6 +128,31 @@ const handleSendMessage = async (content) => {
   } catch (error) {
     console.error('Failed to send message:', error)
     errorMessage.value = '메시지 전송에 실패했습니다.'
+  } finally {
+    isSending.value = false
+  }
+}
+
+// 이미지와 함께 메시지 전송
+const handleSendWithImage = async ({ content, image }) => {
+  if (!chatInstance || !isConnected.value || isSending.value) {
+    return
+  }
+
+  isSending.value = true
+  try {
+    // 1. 이미지 업로드
+    const response = await uploadChatImage(image)
+    const imageUrl = response.data.imageUrl
+
+    // 2. WebSocket으로 메시지 전송 (이미지 URL 포함)
+    const success = chatInstance.sendMessage(content, imageUrl)
+    if (!success) {
+      throw new Error('메시지 전송 실패')
+    }
+  } catch (error) {
+    console.error('Failed to send message with image:', error)
+    errorMessage.value = '이미지 전송에 실패했습니다.'
   } finally {
     isSending.value = false
   }
