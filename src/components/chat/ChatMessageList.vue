@@ -15,7 +15,11 @@
             <span class="sender-name">{{ message.senderId }}</span>
             <span v-if="message.admin" class="admin-badge">관리자</span>
           </div>
-          <div class="message-content">{{ message.content }}</div>
+          <!-- 이미지가 있으면 표시 -->
+          <div v-if="message.imageUrl" class="message-image">
+            <img :src="message.imageUrl" :alt="message.content || '이미지'" @click="openImageModal(message.imageUrl)" />
+          </div>
+          <div v-if="message.content" class="message-content">{{ message.content }}</div>
           <div class="message-time">{{ formatTime(message.createdAt) }}</div>
         </div>
       </div>
@@ -24,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted, onUpdated } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 
 const props = defineProps({
   messages: {
@@ -39,14 +43,16 @@ const props = defineProps({
 })
 
 const messageContainer = ref(null)
+const isUserScrolling = ref(false)
 
 // 내 메시지인지 확인
 const isMyMessage = (message) => {
-  console.log('=== isMyMessage 체크 ===')
-  console.log('message.senderId:', message.senderId)
-  console.log('props.currentUserId:', props.currentUserId)
-  console.log('일치 여부:', message.senderId === props.currentUserId)
   return message.senderId === props.currentUserId
+}
+
+// 이미지 모달 열기 (새 창으로)
+const openImageModal = (imageUrl) => {
+  window.open(imageUrl, '_blank')
 }
 
 // 시간 포맷팅
@@ -66,36 +72,54 @@ const formatTime = (timestamp) => {
   }
 }
 
+// 사용자가 맨 아래에 있는지 확인
+const isAtBottom = () => {
+  if (!messageContainer.value) return false
+  const threshold = 50 // 50px 이내면 맨 아래로 간주
+  const { scrollTop, scrollHeight, clientHeight } = messageContainer.value
+  return scrollHeight - scrollTop - clientHeight < threshold
+}
+
 // 스크롤을 맨 아래로 이동하는 함수
 const scrollToBottom = () => {
   nextTick(() => {
-    if (messageContainer.value) {
-      console.log('스크롤 전 scrollTop:', messageContainer.value.scrollTop)
-      console.log('scrollHeight:', messageContainer.value.scrollHeight)
+    if (messageContainer.value && !isUserScrolling.value) {
       messageContainer.value.scrollTop = messageContainer.value.scrollHeight
-      console.log('스크롤 후 scrollTop:', messageContainer.value.scrollTop)
-    } else {
-      console.log('messageContainer가 없습니다')
     }
   })
 }
 
-// 메시지가 추가되면 스크롤을 아래로
+// 스크롤 이벤트 핸들러
+const handleScroll = () => {
+  if (!messageContainer.value) return
+
+  // 사용자가 맨 아래에 있으면 자동 스크롤 활성화
+  if (isAtBottom()) {
+    isUserScrolling.value = false
+  } else {
+    // 위로 스크롤했으면 자동 스크롤 비활성화
+    isUserScrolling.value = true
+  }
+}
+
+// 메시지 개수가 변경되면 스크롤 (맨 아래에 있을 때만)
 watch(
-  () => props.messages,
+  () => props.messages.length,
   () => {
-    scrollToBottom()
-  },
-  { deep: true, immediate: true }
+    if (!isUserScrolling.value || isAtBottom()) {
+      scrollToBottom()
+    }
+  }
 )
 
-// 컴포넌트 마운트 및 업데이트 시 스크롤
+// 컴포넌트 마운트 시 스크롤 및 이벤트 리스너 등록
 onMounted(() => {
-  scrollToBottom()
-})
-
-onUpdated(() => {
-  scrollToBottom()
+  if (messageContainer.value) {
+    messageContainer.value.addEventListener('scroll', handleScroll)
+    setTimeout(() => {
+      scrollToBottom()
+    }, 100)
+  }
 })
 </script>
 
@@ -191,6 +215,25 @@ onUpdated(() => {
 .my-message .admin-badge {
   background-color: #ffa500;
   color: white;
+}
+
+.message-image {
+  margin-bottom: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 300px;
+  cursor: pointer;
+}
+
+.message-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+.message-image img:hover {
+  opacity: 0.9;
 }
 
 .message-content {

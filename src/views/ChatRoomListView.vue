@@ -91,6 +91,7 @@
           <ChatMessageList :messages="messages || []" :current-user-id="currentUserEmail" />
           <ChatInput
             @send="handleSendMessage"
+            @sendWithImage="handleSendWithImage"
             :disabled="!isConnected || !isMyAssignment"
             :disabled-message="!isMyAssignment ? '내 담당 유저가 아닙니다. 채팅하려면 담당하기를 눌러주세요' : ''"
           >
@@ -116,7 +117,7 @@ import { useRoute } from 'vue-router'
 import ChatRoomListItem from '../components/chat/ChatRoomListItem.vue'
 import ChatMessageList from '../components/chat/ChatMessageList.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
-import { getChatRooms, assignChatRoom, unassignChatRoom, useChat } from '../api/chat'
+import { getChatRooms, assignChatRoom, unassignChatRoom, useChat, uploadChatImage } from '../api/chat'
 import { organizationRole } from '@/composables/useOrganization.js'
 import api from '../api/axios'
 
@@ -189,6 +190,7 @@ const messages = ref([])
 const isConnected = ref(false)
 const isConnecting = ref(false)
 const errorMessage = ref('')
+const isSending = ref(false)
 let chatInstance = null
 
 // 채팅방 목록 로드
@@ -272,6 +274,40 @@ const handleSendMessage = (content) => {
         chatRooms.value[roomIndex].lastMessageAt = new Date().toISOString()
       }
     }
+  }
+}
+
+// 이미지와 함께 메시지 전송
+const handleSendWithImage = async ({ content, image }) => {
+  if (!chatInstance || !isConnected.value || isSending.value) {
+    return
+  }
+
+  isSending.value = true
+  try {
+    // 1. 이미지를 서버에 업로드
+    const response = await uploadChatImage(image)
+    const imageUrl = response.data.imageUrl
+
+    // 2. WebSocket을 통해 이미지 URL과 함께 메시지 전송
+    const success = chatInstance.sendMessage(content, imageUrl)
+    if (!success) {
+      throw new Error('메시지 전송 실패')
+    }
+
+    // 3. 채팅방 목록의 마지막 메시지 즉시 업데이트
+    if (selectedRoom.value) {
+      const roomIndex = chatRooms.value.findIndex(r => r.roomId === selectedRoom.value.roomId)
+      if (roomIndex !== -1) {
+        chatRooms.value[roomIndex].lastMessageContent = content || '이미지'
+        chatRooms.value[roomIndex].lastMessageAt = new Date().toISOString()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to send message with image:', error)
+    errorMessage.value = '이미지 전송에 실패했습니다.'
+  } finally {
+    isSending.value = false
   }
 }
 

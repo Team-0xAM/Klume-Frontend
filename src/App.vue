@@ -1,5 +1,5 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { computed } from 'vue'
 import BaseHeader from './components/common/BaseHeader.vue'
 import ChatFloatingButton from './components/common/ChatFloatingButton.vue'
@@ -9,10 +9,21 @@ import MemberChatView from './components/chat/MemberChatView.vue'
 import { useChatPanel } from './composables/useChatPanel'
 import { isAuthenticated } from './utils/auth'
 
+const route = useRoute()
 const { isPanelOpen, selectedOrganization, closePanel } = useChatPanel()
 
 // 로그인 상태 확인
 const isLoggedIn = computed(() => isAuthenticated())
+
+// 관리자 채팅 페이지인지 확인
+const isAdminChatPage = computed(() => {
+  return route.path.includes('/organization/') && route.path.includes('/chat')
+})
+
+// 플로팅 버튼 표시 여부 (로그인 상태이고 관리자 채팅 페이지가 아닐 때만)
+const showFloatingButton = computed(() => {
+  return isLoggedIn.value && !isAdminChatPage.value
+})
 
 // 조직 선택 핸들러
 const handleSelectOrganization = (org) => {
@@ -24,8 +35,8 @@ const handleSelectOrganization = (org) => {
   <BaseHeader />
   <RouterView />
 
-  <!-- 채팅 플로팅 버튼 (로그인 시에만 표시) -->
-  <ChatFloatingButton v-if="isLoggedIn" @click="isPanelOpen = true" :unread-count="0" />
+  <!-- 채팅 플로팅 버튼 (로그인 시 + 관리자 채팅 페이지가 아닐 때만 표시) -->
+  <ChatFloatingButton v-if="showFloatingButton" @click="isPanelOpen = true" :unread-count="0" />
 
   <!-- 채팅 사이드 패널 -->
   <ChatSidePanel :is-open="isPanelOpen" @close="closePanel" @select-organization="handleSelectOrganization">
