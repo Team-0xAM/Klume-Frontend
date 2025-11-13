@@ -6,7 +6,7 @@
         <div class="content-box">
             <!-- 그룹 목록 -->
             <div class="group-list">
-                <p class="total-count">총 {{ members.length }}명</p>
+                <p class="total-count">총 <span>{{ members.length }}</span> 명</p>
                 <table v-if="members.length > 0" class="group-table">
                     <thead>
                         <tr>
@@ -78,7 +78,9 @@
                     <label>패널티 수</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="number" :value="selectedMember.penaltyCount" disabled class="input" />
-                        <button class="btn-reset" @click="resetPenalty">0으로 초기화</button>
+                        <button class="btn-reset" @click="resetPenalty" :disabled="selectedMember.penaltyCount == 0">0으로
+                            초기화</button>
+
                     </div>
                     <p class="desc">패널티를 0으로 설정하면 정지 기록이 초기화됩니다.</p>
                 </div>
@@ -178,10 +180,13 @@ async function resetPenalty() {
 }
 
 async function saveRole() {
+    if (selectedRole.value === selectedMember.value.organizationRole) {
+        closeModal();
+        return;
+    }
+
     try {
         await updateRole(organizationId, selectedMember.value.organizationMemberId, { organizationRole: selectedRole.value });
-
-        alert('권한이 수정되었습니다.');
 
         await fetchMembers()
 
@@ -190,6 +195,8 @@ async function saveRole() {
         );
 
         if (updated) selectedMember.value = { ...updated };
+
+        closeModal();
     } catch (err) {
         console.error('권한 수정 실패:', err);
         alert('권한 수정 실패');
@@ -216,6 +223,10 @@ watch(() => props.organizationId, fetchMembers);
 </script>
 
 <style scoped>
+.total-count>span {
+    color: #f6c343;
+}
+
 .group-manage {
     padding: 10px;
     font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
@@ -357,7 +368,8 @@ watch(() => props.organizationId, fetchMembers);
     color: #1b3b8b;
 }
 
-.input{
+.input {
+    box-sizing: border-box;
     width: 100%;
     padding: 10px 12px;
     border-radius: 8px;
@@ -416,16 +428,25 @@ watch(() => props.organizationId, fetchMembers);
 
 .btn-reset {
     background: #f6c343;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 12px;
+    border: 1px solid #f6c343;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
     cursor: pointer;
     width: 300px;
+    height: 41.6px;
 }
 
-.btn-reset:hover {
+.btn-reset:not(:disabled):hover {
     background: #e8b231;
+}
+
+.btn-reset:disabled {
+    background: #f1e3a0;
+    /* 톤다운된 노랑 */
+    border: 1px solid #e2d48c;
+    color: #999;
+    cursor: not-allowed;
 }
 
 .desc {

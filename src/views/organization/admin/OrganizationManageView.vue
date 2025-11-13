@@ -30,11 +30,11 @@
           <img :src="InvitationImage">
         </div>
 
-        <h3 class="modal-title">{{organization?.name}}</h3>
+        <h3 class="modal-title">{{ organization?.name }}</h3>
 
         <p class="modal-description">
           새로운 구성원을 우리 조직에 초대해 보세요.<br>
-          아래 링크를 복사하여 손쉽게 공유할 수 있습니다.
+          아래 초대 코드를 복사하여 손쉽게 공유할 수 있습니다.
         </p>
 
         <div class="invite-code-container">
@@ -128,9 +128,7 @@ const handleInvite = async () => {
 
     inviteCode.value = response.data.code
     showInviteModal.value = true
-    
-    
-    alert(`초대 코드가 생성되었습니다: ${inviteCode}`)
+
   } catch (error) {
     console.error('초대 코드 생성 실패:', error)
     alert('초대 코드 생성에 실패했습니다.')
@@ -241,10 +239,10 @@ const copyInviteCode = () => {
   width: 15%;
   justify-content: flex-end;
   margin-bottom: 16px;
-  
+
 }
 
-.invite-container{
+.invite-container {
   display: flex;
   justify-content: flex-end;
   width: 100%;
@@ -275,7 +273,7 @@ const copyInviteCode = () => {
   justify-content: center;
 }
 
-.modal-icon > img {
+.modal-icon>img {
   display: flex;
   justify-content: center;
   width: 200px;
