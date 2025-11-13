@@ -187,13 +187,17 @@ const myReservations = ref([]);
 // 오늘 내 예약 조회
 const fetchMyTodayReservations = async () => {
     try {
-        const res = await api.get(`/organizations/${organizationId.value}/reservations/my/today`)
+        const res = await api.get(`/organizations/${organizationId.value}/reservations/my`)
         const data = Array.isArray(res.data) ? res.data : []
-        myReservations.value = data.map(item => ({
+
+        // reservationStatus가 'TODAY'인 것만 필터링
+        const todayReservations = data.filter(item => item.reservationStatus === 'TODAY')
+
+        myReservations.value = todayReservations.map(item => ({
             room: item.roomName || '회의실',
             time: `${item.startTime || ''} ~ ${item.endTime || ''}`,
-            status: item.status === 'CONFIRMED' ? '예약완료' : '대기중',
-            date: item.date ? new Date(item.date).toLocaleDateString('ko-KR') : ''
+            status: item.reservationStatus === 'CANCELLED' ? '취소됨' : '예약완료',
+            date: item.reservationDate || ''
         }))
     } catch (err) {
         console.error('오늘 내 예약 조회 실패:', err)

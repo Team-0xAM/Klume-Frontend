@@ -46,8 +46,13 @@
                                 </template>
                             </td>
                             <td>
-                                <button class="btn-action" @click="openEditModal(member)">수정</button>
-                                <button class="btn-action danger" @click="removeMember(member)">삭제</button>
+                                <template v-if="member.organizationMemberId !== currentMemberId">
+                                    <button class="btn-action" @click="openEditModal(member)">수정</button>
+                                    <button class="btn-action danger" @click="removeMember(member)">삭제</button>
+                                </template>
+                                <template v-else>
+                                    <span class="my-info">-</span>
+                                </template>
                             </td>
                         </tr>
                     </tbody>
@@ -110,7 +115,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getOrganizationMembers, updatePenalty, updateRole, kickMember } from '@/api/organization/organizationMember';
+import { getOrganizationMembers, updatePenalty, updateRole, kickMember, getMyInfoInOrganization } from '@/api/organization/organizationMember';
 
 const props = defineProps({
     organizationId: {
@@ -122,11 +127,21 @@ const props = defineProps({
 const route = useRoute();
 const organizationId = Number(route.params.organizationId);
 const members = ref([]);
+const currentMemberId = ref(null);
 
 const showModal = ref(false);
 
 function closeModal() {
     showModal.value = false
+}
+
+async function fetchMyInfo() {
+    try {
+        const { data } = await getMyInfoInOrganization(organizationId);
+        currentMemberId.value = data?.organizationMemberId;
+    } catch (err) {
+        console.error('내 조직 정보 조회 실패:', err);
+    }
 }
 
 async function fetchMembers() {
@@ -139,7 +154,6 @@ async function fetchMembers() {
             isBanned: member.isBanned ?? member.banned,
             organizationRole: member.organizationRole,
             bannedAt: member.bannedAt,
-            organizationRole: member.organizationRole,
             nickname: member.nickname,
             organizationGroupId: member.organizationGroupId,
             organizationGroupName: member.organizationGroupName
@@ -217,7 +231,10 @@ async function removeMember(member) {
     }
 }
 
-onMounted(fetchMembers);
+onMounted(async () => {
+    await fetchMyInfo();
+    await fetchMembers();
+});
 
 watch(() => props.organizationId, fetchMembers);
 </script>
@@ -452,5 +469,11 @@ watch(() => props.organizationId, fetchMembers);
 .desc {
     font-size: 12px;
     color: #777;
+}
+
+.my-info {
+    color: #888;
+    font-size: 13px;
+    font-weight: 500;
 }
 </style>
