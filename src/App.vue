@@ -8,6 +8,7 @@ import MemberChatOrganizationList from './components/chat/MemberChatOrganization
 import MemberChatView from './components/chat/MemberChatView.vue'
 import { useChatPanel } from './composables/useChatPanel'
 import { isAuthenticated } from './utils/auth'
+import Footer from "@/components/footer/Footer.vue";
 
 const route = useRoute()
 const { isPanelOpen, selectedOrganization, closePanel } = useChatPanel()
@@ -50,6 +51,7 @@ const handleSelectOrganization = (org) => {
       <MemberChatView v-if="selectedOrganization" :organization="selectedOrganization" />
     </template>
   </ChatSidePanel>
+  <Footer />
 </template>
 
 <style>

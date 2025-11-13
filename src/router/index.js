@@ -52,6 +52,9 @@ import userhome from "@/views/test/userhome.vue";
 // --- 에러 / 예외 뷰 ---
 import ForbiddenView from "@/views/error/ForbiddenView.vue";
 
+// --- Footer ---
+import OpensourceLicense from '@/views/OpenSourceLicense.vue'
+
 // --- Routes 설정 ---
 const routes = [
   // 공용
@@ -74,6 +77,16 @@ const routes = [
     component: OrganizationMemberHomeView,
     meta: { requiresAuth: true },
   },
+
+  // 푸터 faq추가
+  {
+  path: '/faq',
+  name: 'FAQ',
+  component: () => import('@/views/FAQView.vue'),
+  },
+
+  // 오픈소스 라이센스
+  { path: '/open-source-license', component: OpensourceLicense },
 
   // 조직 내부 라우트
   {

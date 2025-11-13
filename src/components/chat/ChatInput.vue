@@ -7,7 +7,24 @@
     </div>
 
     <!-- 일반 입력창 -->
-    <div v-else class="input-wrapper">
+    <div
+      v-else
+      class="input-wrapper"
+      @dragover.prevent="handleDragOver"
+      @dragleave.prevent="handleDragLeave"
+      @drop.prevent="handleDrop"
+      :class="{ 'drag-over': isDragging }"
+    >
+      <!-- 드래그 오버레이 -->
+      <div v-if="isDragging" class="drag-overlay">
+        <div class="drag-content">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>이미지를 여기에 놓으세요</p>
+        </div>
+      </div>
+
       <!-- 이미지 미리보기 -->
       <div v-if="selectedImage" class="image-preview-container">
         <div class="image-preview">
@@ -50,6 +67,7 @@
           v-model="message"
           @keydown.enter.exact.prevent="handleSend"
           @keydown.enter.shift.exact="handleNewLine"
+          @paste="handlePaste"
           :disabled="disabled"
           :placeholder="disabled ? '연결 중...' : '메시지를 입력하세요 (Enter: 전송, Shift+Enter: 줄바꿈)'"
           class="message-input"
@@ -97,6 +115,7 @@ const textareaRef = ref(null)
 const fileInput = ref(null)
 const selectedImage = ref(null)
 const imagePreviewUrl = ref('')
+const isDragging = ref(false)
 
 // 파일 선택 다이얼로그 열기
 const openFileDialog = () => {
@@ -109,9 +128,23 @@ const openFileDialog = () => {
 const handleFileSelect = (event) => {
   const file = event.target.files[0]
   if (file && file.type.startsWith('image/')) {
-    selectedImage.value = file
-    imagePreviewUrl.value = URL.createObjectURL(file)
+    setImageFile(file)
   }
+}
+
+// 이미지 파일 설정 (공통 함수)
+const setImageFile = (file) => {
+  if (!file || !file.type.startsWith('image/')) {
+    return
+  }
+
+  // 기존 이미지가 있으면 제거
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+
+  selectedImage.value = file
+  imagePreviewUrl.value = URL.createObjectURL(file)
 }
 
 // 이미지 제거
@@ -158,6 +191,68 @@ const handleNewLine = (event) => {
   // 기본 동작 허용 (줄바꿈)
 }
 
+// 드래그 오버 처리
+const handleDragOver = (event) => {
+  if (props.disabled) return
+
+  // 파일이 드래그되고 있는지 확인
+  const hasFiles = event.dataTransfer && event.dataTransfer.types.includes('Files')
+  if (hasFiles) {
+    isDragging.value = true
+  }
+}
+
+// 드래그 떠남 처리
+const handleDragLeave = (event) => {
+  // 자식 요소로 이동할 때도 발생하므로, 실제로 영역을 벗어났는지 확인
+  const rect = event.currentTarget.getBoundingClientRect()
+  const x = event.clientX
+  const y = event.clientY
+
+  if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
+    isDragging.value = false
+  }
+}
+
+// 드롭 처리
+const handleDrop = (event) => {
+  isDragging.value = false
+
+  if (props.disabled) return
+
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (file.type.startsWith('image/')) {
+      setImageFile(file)
+    } else {
+      alert('이미지 파일만 업로드할 수 있습니다.')
+    }
+  }
+}
+
+// 붙여넣기 처리
+const handlePaste = (event) => {
+  if (props.disabled) return
+
+  const items = event.clipboardData?.items
+  if (!items) return
+
+  // 클립보드에서 이미지 찾기
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item.type.startsWith('image/')) {
+      event.preventDefault() // 기본 붙여넣기 동작 방지
+
+      const file = item.getAsFile()
+      if (file) {
+        setImageFile(file)
+      }
+      break
+    }
+  }
+}
+
 // textarea 자동 높이 조절
 watch(message, () => {
   nextTick(() => {
@@ -199,25 +294,101 @@ watch(message, () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
+  min-height: 120px;
+}
+
+.input-wrapper.drag-over {
+  opacity: 0.8;
+}
+
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(12, 28, 84, 0.95);
+  border: 3px dashed #ffe812;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.drag-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #ffe812;
+}
+
+.drag-content svg {
+  stroke: #ffe812;
+  animation: bounce 1s infinite;
+}
+
+.drag-content p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .image-preview-container {
-  padding: 8px;
+  padding: 12px;
+  background-color: #f8f9fb;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.image-preview-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.image-preview-container::-webkit-scrollbar-track {
+  background: #e0e0e0;
+  border-radius: 3px;
+}
+
+.image-preview-container::-webkit-scrollbar-thumb {
+  background: #999;
+  border-radius: 3px;
+}
+
+.image-preview-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
 }
 
 .image-preview {
   position: relative;
-  display: inline-block;
-  max-width: 200px;
+  display: block;
+  width: 100%;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   border: 2px solid #e0e0e0;
+  background-color: white;
+  padding: 8px;
 }
 
 .image-preview img {
   width: 100%;
   height: auto;
   display: block;
+  border-radius: 4px;
 }
 
 .remove-image-btn {
