@@ -9,38 +9,44 @@
     <!-- 상단 정보 -->
     <div class="table-header">
       <span>총 <span class="count">{{ roomCount }}</span>개</span>
-      <button class="add-btn" @click="showAddModal = true">회의실 추가</button>
+      <button class="add-btn" @click="showAddModal = true">
+        <span class="plus-icon">+</span> 회의실 추가
+      </button>
     </div>
 
     <!-- 목록 테이블 -->
-    <table class="room-table">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>회의실 이름</th>
-          <th>설명</th>
-          <th>수용 인원</th>
-          <th>등록된 이용가능시간</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr 
-          v-for="(room, index) in rooms" 
-          :key="room.id"
-          class="clickable-row"
-          @click="goToDetail(room.id)"
-        >
-          <td>{{ index + 1 }}</td>
-          <td>{{ room.name }}</td>
-          <td>{{ room.description || '-' }}</td>
-          <td>{{ room.capacity }}</td>
-          <td>
-            <span v-if="room.availableTime > 0">{{ room.availableTime }}개</span>
-            <span v-else style="color: #999;">미등록</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="room-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>회의실 이름</th>
+            <th>설명</th>
+            <th>수용 가능 인원</th>
+            <th>등록된 이용가능시간</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="(room, index) in rooms" 
+            :key="room.id"
+            class="clickable-row"
+            @click="goToDetail(room.id)"
+          >
+            <td class="room-no">{{ index + 1 }}</td>
+            <td class="room-name">{{ room.name }}</td>
+            <td class="room-desc">{{ room.description || '-' }}</td>
+            <td class="room-capacity">
+              <span class="capacity-badge">{{ room.capacity }}명</span>
+            </td>
+            <td class="room-time">
+              <span v-if="room.availableTime > 0" class="time-badge active">{{ room.availableTime }}개</span>
+              <span v-else class="time-badge">미등록</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- 회의실 등록 모달 -->
     <AddRoomModal
@@ -82,11 +88,11 @@ async function fetchRooms() {
       name: room.name,
       description: room.description,
       capacity: room.capacity,
-      availableTime: 0 // 초기화
+      availableTime: 0
     }))
     for (const room of rooms.value) {
       const res = await getAvailableTimes(props.organizationId, room.id)
-      room.availableTime = res.data.length // 개수 반영
+      room.availableTime = res.data.length
     }
   } catch (error) {
     console.error("회의실 목록 조회 실패:", error)
@@ -97,7 +103,6 @@ function goToDetail(roomId) {
   router.push(`/organization/${props.organizationId}/admin/rooms/${roomId}`)
 }
 
-// 모달에서 넘어온 데이터 → 서버에 전달
 async function addRoom(roomData, imageFile) {
   try {
     const { data } = await createRoom(props.organizationId, roomData, imageFile)
@@ -120,74 +125,178 @@ async function addRoom(roomData, imageFile) {
   flex: 1;
   padding: 40px 60px;
   background-color: #fff;
+  border-radius: 16px; 
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .header h2 {
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  color: #0B174E;
 }
 
 .header p {
-  font-size: 14px;
-  color: #555;
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 .table-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  padding: 0 4px;
 }
 
 .table-header span {
-  font-size: 14px;
-  margin-right: 10px;
-  color: #555;
+  font-size: 16px;
+  color: #374151;
+  font-weight: 500;
 }
 
 .table-header span.count {
-  color: #f9c802;
+  color: #f59e0b;
   font-weight: 700;
-  margin: 0;
+  font-size: 18px;
+  margin: 0 4px;
 }
 
 .add-btn {
-  background-color: #002b87;
+  background: #002b87;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
+  border-radius: 8px;
+  padding: 10px 10px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;  
+  justify-content: center;  
+  box-shadow: 0 2px 4px rgba(0, 43, 135, 0.2);
+}
+.add-btn:hover {
+  background: #003399;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 43, 135, 0.3);
 }
 
-.add-btn:hover {
-  background-color: #0044cc;
+.add-btn:active {
+  transform: translateY(0);
+}
+
+.plus-icon {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .room-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  background: #fff;
+}
+
+.room-table thead {
+  background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
 }
 
 .room-table th {
-  background-color: #f8f9fa;
-  padding: 12px 10px;
-  border-bottom: 1px solid #ddd;
+  padding: 16px 20px;
+  border-bottom: 2px solid #e5e7eb;
   font-weight: 600;
   text-align: center;
+  font-size: 16px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .room-table td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  color: #333;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
   text-align: center;
+  font-size: 16px;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clickable-row:hover {
+  background-color: #f9fafb;
+  transform: scale(1.01);
+}
+
+.clickable-row:active {
+  background-color: #f3f4f6;
+}
+
+.room-no {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.room-name {
+  font-weight: 700;
+  color: #0B174E;
+  font-size: 15px;
+}
+
+.room-desc {
+  color: #6b7280;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.capacity-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #93c5fd;
+}
+
+.time-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+}
+
+.time-badge.active {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.room-table tbody tr:last-child td {
+  border-bottom: none;
 }
 </style>

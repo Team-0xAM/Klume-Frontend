@@ -342,7 +342,9 @@ onMounted(async () => {
     border-radius: 10px;
     padding: 24px;
     margin-bottom: 30px;
+    margin-top:20px;
     align-items: flex-start;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .info { flex: 1; }
@@ -367,9 +369,8 @@ onMounted(async () => {
 }
 
 .room-image {
-    width: 280px;
-    height: 180px;
-    border-radius: 8px;
+    width: 250px;
+    height: 200px;
     object-fit: cover;
     margin-right: 24px;
 }
@@ -445,7 +446,7 @@ onMounted(async () => {
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 /* 헤더 */

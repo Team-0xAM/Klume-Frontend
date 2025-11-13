@@ -179,7 +179,6 @@ const dayData = ref({ available: [], reserved: [], pending: [] })
 const showModal = ref(false)
 const modalData = ref({})
 
-// 🔥 인증사진 조회 API
 async function loadReservationPhoto(reservationId) {
   try {
     const res = await axios.get(
@@ -328,10 +327,10 @@ onMounted(fetchWeekly)
 
 <style scoped>
 /* 전체 구조 */
-.reservation-page { padding: 40px 5%; background-color: #fff; min-height: 100vh; }
+.reservation-page { padding: 40px 5%; background-color: #fff; min-height: 100vh; border-radius: 16px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);}
 
 /* 헤더 */
-.header h2 { font-size: 22px; font-weight: 700; color: #001f5c; }
+.header h2 { font-size: 22px; font-weight: 700; color: #001f5c; margin-bottom: 10px;}
 .header p { color: #555; font-size: 14px; }
 
 /* 상단 */
@@ -346,7 +345,7 @@ onMounted(fetchWeekly)
 .green { background: #1bb978; } .red { background: #e44b4b; } .gray { background: #999; }
 
 .table-wrapper.scrollable { max-height: 70vh; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; }
-.reservation-table { width: 100%; border-collapse: collapse; text-align: center; border: 1px solid #ddd; min-width: 600px; }
+.reservation-table { width: 100%; border-collapse: collapse; text-align: center; border: 1px solid #ddd; min-width: 600px;}
 .reservation-table th, .reservation-table td { border: 1px solid #ddd; padding: 8px; }
 .status.available { color: #1bb978; } .status.reserved { color: #e44b4b; } .status.pending { color: #999; }
 .reservation-table thead th.sticky-top { position: sticky; top: 0; background: #f9fafc; z-index: 2; }
@@ -354,31 +353,133 @@ onMounted(fetchWeekly)
 
 /* 일별 보기 */
 .day-view { margin-top: 20px; }
-.date-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.summary { display: flex; gap: 12px; font-size: 14px; font-weight: 600; }
-.count.available { color: #1bb978; } .count.reserved { color: #e44b4b; } .count.pending { color: #777; }
-.section { margin-top: 30px; }
-.card { border: 1px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: background 0.2s; }
-.card:hover { background: #fafafa; }
-.card-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.left { display: flex; align-items: center; gap: 10px; }
-.room-name { font-weight: 700; }
-.tag { font-size: 12px; border-radius: 12px; padding: 3px 8px; }
-.tag.available { background-color: #e7f6ef; color: #1bb978; }
-.tag.reserved { background-color: #fdeaea; color: #e44b4b; }
-.tag.pending { background-color: #f3f3f3; color: #777; }
-.info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: #333; }
-.empty { text-align: center; color: #999; margin-top: 40px; font-size: 15px; }
+.date-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+.date-title { font-size: 20px; font-weight: 700; color: #0B174E; }
+.summary { display: flex; gap: 16px; font-size: 14px; font-weight: 600; }
+.count { padding: 6px 12px; border-radius: 20px; background: #f8f9fa; }
+.count.available { background-color: #e7f6ef; color: #1bb978; } 
+.count.reserved { background-color: #fdeaea; color: #e44b4b; } 
+.count.pending { background-color: #f3f3f3; color: #777; }
 
+.section { margin-top: 35px; }
+.section h4 {
+  font-size: 16px;   
+  color: #475467;    
+  margin-bottom: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card { 
+  border: 1px solid #e5e7eb; 
+  border-radius: 12px; 
+  padding: 18px 20px; 
+  margin-bottom: 12px; 
+  cursor: pointer; 
+  transition: all 0.2s ease;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover { 
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.card.reserved:hover {
+  border-color: #fca5a5;
+}
+
+.card.available {
+  cursor: default;
+}
+
+.card.available:hover {
+  transform: none;
+}
+
+.card-main { 
+  display: flex; 
+  flex-direction: column;
+  gap: 12px; 
+}
+
+.left { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px;
+}
+
+.room-name { 
+  font-weight: 700; 
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.tag { 
+  font-size: 12px; 
+  border-radius: 16px; 
+  padding: 4px 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag.available { 
+  background-color: #d1fae5; 
+  color: #059669; 
+  border: 1px solid #6ee7b7;
+}
+
+.tag.reserved { 
+  background-color: #fee2e2; 
+  color: #dc2626; 
+  border: 1px solid #fca5a5;
+}
+
+.tag.pending { 
+  background-color: #f3f4f6; 
+  color: #6b7280; 
+  border: 1px solid #d1d5db;
+}
+
+.info { 
+  display: flex; 
+  align-items: center; 
+  gap: 16px; 
+  flex-wrap: wrap; 
+  font-size: 14px; 
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty { 
+  text-align: center; 
+  color: #9ca3af; 
+  margin-top: 60px; 
+  font-size: 15px;
+  padding: 40px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px dashed #e5e7eb;
+}
 /* 모달 */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 999; }
 .modal { background: white; padding: 25px; border-radius: 10px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
 .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #002b87; }
 .modal-sub { color: #555; font-size: 14px; margin: 3px 0; }
 .modal-image img {
-  max-width: 280px;  /* 원하는 크기 */
-  max-height: 280px; /* 원하는 크기 */
-  object-fit: cover; /* 잘림 방지 또는 채우기 */
+  max-width: 280px;  
+  max-height: 280px;
+  object-fit: cover; 
   border-radius: 8px;
   margin: 15px auto;
   display: block;
