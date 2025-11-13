@@ -1,11 +1,12 @@
 <template>
   <div class="reservation-page">
-    <h2 class="title">예약하기</h2>
+    <h2 class="page-title">예약하기</h2>
+
     <div class="header-section">
-      <!-- 회의실 선택 드롭다운 -->
+      <!-- 회의실 선택 -->
       <div class="room-selector">
         <label for="roomSelect">회의실 선택</label>
-        <select id="roomSelect" v-model="selectedRoomId">
+        <select id="roomSelect" v-model="selectedRoomId" @change="fetchReservations">
           <option value="" disabled>회의실을 선택하세요</option>
           <option v-for="room in rooms" :key="room.id" :value="room.id">
             {{ room.name }}
@@ -74,24 +75,106 @@
       </div>
     </div>
 
-    <!-- 회의실 선택 안 됨 -->
-    <div v-else class="no-selection">
-      회의실을 선택하면 예약 정보를 확인할 수 있습니다.
+    <!-- 예약 가능 시간 -->
+    <h3 class="page-title">예약 가능 시간</h3>
+    <div v-if="selectedRoomData && reservations.length > 0" class="time-section">
+      
+      <table class="reservation-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>이름</th>
+            <th>이용 시간</th>
+            <th>예약상태</th>
+            <th>오픈</th>
+            <th>예약하기</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in reservations" :key="index">
+            <td>{{ index + 1 }}</td>
+            <td>{{ item.timeName }}</td>
+            <td class="time-cell">{{ item.startTime }} - {{ item.endTime }}</td>
+            <td>
+              <span 
+                class="status-badge"
+                :class="{
+                  'reserved': getStatusText(item) === '예약 됨',
+                  'opening': getStatusText(item) === '오픈 예정',
+                  'available': getStatusText(item) === '예약 가능'
+                }"
+              >
+                {{ getStatusText(item) }}
+              </span>
+              <div v-if="item.status === 'RESERVED' && item.reservedMember" class="reserved-info">
+              </div>
+            </td>
+            <td class="open-time-cell">
+              <div v-if="item.status === 'OPENING_SOON'">
+                <div v-if="isOpeningSoon(item)" class="countdown">
+                  {{ getCountdown(item) }} 후<br/>오픈 예정
+                </div>
+                <div v-else>
+                  {{ formatOpenTime(item) }}
+                </div>
+              </div>
+              <div v-else-if="item.status === 'AVAILABLE'">
+                상시
+              </div>
+              <div v-else>
+                {{ formatOpenTime(item) }}
+              </div>
+            </td>
+            <td>
+              <button 
+                v-if="item.status === 'AVAILABLE' && !isTimePassed(item)"
+                class="reserve-btn available"
+                @click="handleReserve(item)"
+              >
+                예약 가능
+              </button>
+              <button 
+                v-else-if="item.status === 'AVAILABLE' && isTimePassed(item)"
+                class="reserve-btn closed"
+                disabled
+              >
+                시간 마감
+              </button>
+              <button 
+                v-else-if="item.status === 'OPENING_SOON'"
+                class="reserve-btn opening"
+                disabled
+              >
+                오픈 예정
+              </button>
+              <button 
+                v-else
+                class="reserve-btn reserved"
+                disabled
+              >
+                예약 불가
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-
-    <div class="time-slots" v-if="selectedRoomData">
-      <p class="placeholder">시간대 선택 영역 (개발 예정)</p>
+    <!-- 데이터 없음 -->
+    <div v-else-if="selectedRoomData && reservations.length === 0" class="no-data">
+      선택한 날짜에 예약 가능한 시간이 없습니다.
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getRooms } from '@/api/room/roomApi'
+import api from '@/api/axios'
 
 const route = useRoute()
+const router = useRouter()
 const organizationId = Number(route.params.organizationId || 0)
 const rooms = ref([])
 const selectedRoomId = ref('')
@@ -99,6 +182,10 @@ const selectedDate = ref('')
 const showCalendar = ref(false)
 const currentYear = ref(new Date().getFullYear())
 const currentMonthIndex = ref(new Date().getMonth())
+const reservations = ref([])
+const currentTime = ref(new Date())
+
+let countdownInterval = null
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -113,7 +200,10 @@ const fetchMeetingRooms = async () => {
     const res = await getRooms(organizationId)
     if (Array.isArray(res.data)) {
       rooms.value = res.data
-      selectedRoomId.value = res.data[0].id
+      if (res.data.length > 0) {
+        selectedRoomId.value = res.data[0].id
+        await fetchReservations()
+      }
     } else {
       console.error('Unexpected data format:', res.data)
     }
@@ -122,7 +212,34 @@ const fetchMeetingRooms = async () => {
   }
 }
 
-// 오늘 날짜로 초기화
+// 예약 현황 조회
+async function fetchReservations() {
+  if (!selectedRoomId.value || !selectedDate.value) return
+  
+  try {
+    const res = await api.get(
+      `/organizations/${organizationId}/reservations/status/day`,
+      {
+        params: { date: selectedDate.value },
+        withCredentials: true
+      }
+    )
+    
+    if (Array.isArray(res.data)) {
+      // 선택된 회의실의 예약만 필터링
+      reservations.value = res.data.filter(
+        item => item.roomId === Number(selectedRoomId.value)
+      )
+    } else {
+      console.error('Unexpected data format:', res.data)
+      reservations.value = []
+    }
+  } catch (err) {
+    console.error('예약 현황을 불러오지 못했습니다:', err)
+    reservations.value = []
+  }
+}
+
 function initializeDate() {
   const today = new Date()
   selectedDate.value = formatDateString(today)
@@ -183,7 +300,7 @@ const calendarDates = computed(() => {
     })
   }
  
-  const remainingDays = 42 - dates.length // 6주 = 42일
+  const remainingDays = 42 - dates.length
   for (let i = 1; i <= remainingDays; i++) {
     const dateObj = new Date(year, month + 1, i)
     dates.push({
@@ -219,11 +336,112 @@ function selectDate(date) {
   if (date.isOtherMonth) return
   selectedDate.value = date.dateString
   showCalendar.value = false
+  fetchReservations()
+}
+
+// 상태 텍스트 변환
+function getStatusText(item) {
+  const statusMap = {
+    'RESERVED': '예약 됨',
+    'OPENING_SOON': '오픈 예정',
+    'AVAILABLE': '예약 가능'
+  }
+  return statusMap[item.status] || item.status
+}
+
+// 오픈 시간 포맷 (11.09 09:00)
+function formatOpenTime(item) {
+  if (!item.reservationOpenDay || !item.reservationOpenTime) return '-'
+  
+  const openDate = new Date(selectedDate.value)
+  openDate.setDate(openDate.getDate() - item.reservationOpenDay)
+  
+  const month = String(openDate.getMonth() + 1).padStart(2, '0')
+  const day = String(openDate.getDate()).padStart(2, '0')
+  
+  return `${month}.${day} ${item.reservationOpenTime}`
+}
+
+// 1시간 이내 오픈 예정인지 확인
+function isOpeningSoon(item) {
+  if (!item.reservationOpenDay || !item.reservationOpenTime) return false
+  
+  const openDate = new Date(selectedDate.value)
+  openDate.setDate(openDate.getDate() - item.reservationOpenDay)
+  
+  const [hours, minutes] = item.reservationOpenTime.split(':')
+  openDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+  
+  const diff = openDate.getTime() - currentTime.value.getTime()
+  return diff > 0 && diff <= 3600000 // 1시간 = 3600000ms
+}
+
+// 카운트다운 계산
+function getCountdown(item) {
+  if (!item.reservationOpenDay || !item.reservationOpenTime) return ''
+  
+  const openDate = new Date(selectedDate.value)
+  openDate.setDate(openDate.getDate() - item.reservationOpenDay)
+  
+  const [hours, minutes] = item.reservationOpenTime.split(':')
+  openDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+  
+  const diff = openDate.getTime() - currentTime.value.getTime()
+  
+  if (diff <= 0) return '곧 오픈'
+  
+  const totalMinutes = Math.floor(diff / 60000)
+  const displayHours = Math.floor(totalMinutes / 60)
+  const displayMinutes = totalMinutes % 60
+  
+  if (displayHours > 0) {
+    return `${String(displayHours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}`
+  }
+  return `${String(displayMinutes).padStart(2, '0')}:00`
+}
+
+// 시간이 지났는지 확인
+function isTimePassed(item) {
+  if (!item.endTime) return false
+  
+  const today = new Date()
+  const selectedDateObj = new Date(selectedDate.value)
+  
+  // 선택된 날짜가 오늘이 아니면 false
+  if (selectedDateObj.toDateString() !== today.toDateString()) {
+    return selectedDateObj < today
+  }
+  
+  // 오늘인 경우 endTime 체크
+  const [hours, minutes] = item.endTime.split(':')
+  const endDateTime = new Date(selectedDate.value)
+  endDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+  
+  return currentTime.value >= endDateTime
+}
+
+// 예약하기 버튼 클릭
+function handleReserve(item) {
+  router.push(`/reservation/${item.roomId}?date=${selectedDate.value}`)
+}
+
+// 실시간 업데이트
+function startCountdown() {
+  countdownInterval = setInterval(() => {
+    currentTime.value = new Date()
+  }, 1000)
 }
 
 onMounted(() => {
   initializeDate()
   fetchMeetingRooms()
+  startCountdown()
+})
+
+onUnmounted(() => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+  }
 })
 </script>
 
@@ -235,8 +453,11 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-.title {
-  color: #1e3a8a
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 30px;
 }
 
 .header-section {
@@ -247,7 +468,6 @@ onMounted(() => {
   margin-bottom: 30px;
 }
 
-/* 회의실 선택 */
 .room-selector {
   display: flex;
   align-items: center;
@@ -255,8 +475,8 @@ onMounted(() => {
 }
 
 .room-selector label {
-  font-weight: 500;
-  color: #1e3a8a;
+  font-weight: 600;
+  color: #1a1a1a;
   font-size: 16px;
 }
 
@@ -278,7 +498,6 @@ onMounted(() => {
 /* 날짜 선택 */
 .date-selector {
   position: relative;
-  flex-shrink: 0;
 }
 
 .date-btn {
@@ -291,6 +510,7 @@ onMounted(() => {
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
+  color: #1e3a8a;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -410,24 +630,27 @@ onMounted(() => {
 
 .room-info {
   display: flex;
-  align-items: center;
-  gap: 40px; 
+  gap: 40px;
   background: white;
-  padding: 24px;
+  padding: 30px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 30px;
+  align-items: center; 
+  justify-content: center;
 }
 
-.room-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.room-image {
+  width: 250px;
+  height: 200px;
+  border-radius: 1px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .room-image img {
-  width: 250px;
-  height: 200px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -440,13 +663,12 @@ onMounted(() => {
 
 .info-row {
   display: flex;
-  gap: 40px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .info-row .label {
   font-weight: 600;
-  color: #0B174E;
+  color: #1e3a8a;
   min-width: 120px;
 }
 
@@ -455,26 +677,129 @@ onMounted(() => {
   flex: 1;
 }
 
-.no-selection {
+/* 예약 시간 섹션 */
+.time-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+}
+
+/* 예약 테이블 */
+.reservation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reservation-table th {
+  background: #f8f9fa;
+  padding: 14px 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #1a1a1a;
+  border-bottom: 2px solid #e0e0e0;
+  font-size: 15px;
+}
+
+.reservation-table td {
+  padding: 16px 12px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+.time-cell {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+/* 상태 뱃지 */
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-badge.reserved {
+  background: #fee;
+  color: #d32f2f;
+}
+
+.status-badge.opening {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.available {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.reserved-info {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* 오픈 시간 */
+.open-time-cell {
+  font-size: 14px;
+  color: #666;
+}
+
+.countdown {
+  font-weight: 600;
+  color: #f57c00;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* 예약 버튼 */
+.reserve-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.reserve-btn.available {
+  background: #1e3a8a;
+  color: white;
+}
+
+.reserve-btn.available:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+}
+
+.reserve-btn.opening,
+.reserve-btn.reserved,
+.reserve-btn.closed {
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* 데이터 없음 */
+.no-data {
   background: white;
   padding: 60px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   text-align: center;
-  color: #999;
-  font-size: 16px;
-}
-
-/* 시간대 영역 */
-.time-slots {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  text-align: center;
-}
-
-.placeholder {
   color: #999;
   font-size: 16px;
 }
