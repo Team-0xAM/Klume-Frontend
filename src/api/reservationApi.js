@@ -12,8 +12,8 @@ export const getDailyReservations = (organizationId, date) => {
     })
 }
 
-export const cancelReservation = (organizationId, roomId, dailyAvailableTimeId) => {
-    return axios.delete(
-        `/organizations/${organizationId}/rooms/${roomId}/reservations/${dailyAvailableTimeId}`
+export const cancelReservation = (organizationId, roomId, reservationId) => {
+    return axios.put(
+        `/organizations/${organizationId}/rooms/${roomId}/reservations/${reservationId}`
     )
 }

@@ -9,9 +9,14 @@
     <!-- 상단: 달력 + 보기 전환 -->
     <div class="top-bar">
       <div class="left-controls">
-        <button @click="prev">〈</button>
+      <button class="nav-btn" @click="prev">
+        ◀
+      </button>
         <input type="date" v-model="selectedDate" class="date-picker" @change="onDateChange" />
-        <button @click="next">〉</button>
+        <button class="nav-btn" @click="next">
+          ▶
+        </button>
+
       </div>
       <button class="toggle-btn" @click="toggleView">
         {{ viewMode === 'week' ? '일별로 보기 🗓️' : '주별로 보기 📅' }}
@@ -141,6 +146,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
+import axios from "@/api/axios"
 import { getWeeklyReservations, getDailyReservations, cancelReservation } from "@/api/reservationApi"
 
 const route = useRoute()
@@ -154,11 +160,13 @@ function getWeekRange(baseDate) {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
     return formatDate(d)
-  }) }
+  })
+}
 
 function formatDay(d) {
   const day = ["일","월","화","수","목","금","토"][new Date(d).getDay()]
-  return `${d.slice(5)}(${day})` }
+  return `${d.slice(5)}(${day})`
+}
 
 const today = new Date()
 const selectedDate = ref(formatDate(today))
@@ -171,9 +179,45 @@ const dayData = ref({ available: [], reserved: [], pending: [] })
 const showModal = ref(false)
 const modalData = ref({})
 
-function openModal(r) { modalData.value = r 
-                        showModal.value = true }
-function closeModal() { showModal.value = false }
+// 🔥 인증사진 조회 API
+async function loadReservationPhoto(reservationId) {
+  try {
+    const res = await axios.get(
+      `/organizations/${organizationId}/reservations/${reservationId}/photo`
+    )
+    return res.data
+  } catch (err) {
+    console.error("인증사진 조회 실패:", err)
+    return null
+  }
+}
+
+// 모달 열 때 인증사진 불러오는 로직 추가
+async function openModal(r) {
+  showModal.value = true;
+  modalData.value = r;
+
+  try {
+    if (!r.reservationId) {
+      modalData.value.imageUrl = null;
+      return;
+    }
+
+    // 이미지 조회 요청
+    const { data: imageUrl } = await axios.get(
+      `/organizations/${organizationId}/reservations/${r.reservationId}/photo`
+    );
+
+    modalData.value.imageUrl = imageUrl;
+  } catch (err) {
+    console.error("이미지 조회 실패:", err);
+    modalData.value.imageUrl = null;
+  }
+}
+
+function closeModal() {
+  showModal.value = false
+}
 
 // API
 async function fetchWeekly() {
@@ -200,11 +244,14 @@ async function fetchDaily() {
   try {
     const { data } = await getDailyReservations(organizationId, selectedDate.value)
     const available = [], reserved = [], pending = []
+
     data.forEach(r => {
       const item = {
         id: `${r.roomId}-${r.date}-${r.startTime}`,
+        reservationId: r.reservationId,
         roomId: r.roomId,
         roomName: r.roomName,
+        date: r.date,
         startTime: r.startTime,
         endTime: r.endTime,
         reservedMember: r.reservedMember || "-",
@@ -215,13 +262,14 @@ async function fetchDaily() {
       else if (r.status === "RESERVED") reserved.push(item)
       else if (r.status === "OPENING_SOON") pending.push(item)
     })
+
     dayData.value = { available, reserved, pending }
   } catch (err) {
     console.error("일별 예약 조회 실패:", err)
   }
 }
 
-// 날짜 이동
+// 날짜 이동 / 토글 동일 (생략하지 않고 그대로 유지)
 async function prev() {
   const target = new Date(selectedDate.value)
   target.setDate(target.getDate() - (viewMode.value === "week" ? 7 : 1))
@@ -253,11 +301,11 @@ async function toggleView() {
   await refreshView()
 }
 
-// 관리자 취소
+// 예약 취소 동일
 async function cancel(r) {
   if (!confirm(`[${r.roomName}] 예약을 정말 취소하시겠습니까?`)) return
   try {
-    await cancelReservation(organizationId, r.roomId, r.id)
+    await cancelReservation(organizationId, r.roomId, r.reservationId)
     alert("예약이 취소되었습니다.")
     closeModal()
     await fetchDaily()
@@ -327,11 +375,46 @@ onMounted(fetchWeekly)
 .modal { background: white; padding: 25px; border-radius: 10px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
 .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #002b87; }
 .modal-sub { color: #555; font-size: 14px; margin: 3px 0; }
-.modal-image img { width: 100%; height: auto; border-radius: 8px; margin: 15px 0; border: 1px solid #ccc; }
+.modal-image img {
+  max-width: 280px;  /* 원하는 크기 */
+  max-height: 280px; /* 원하는 크기 */
+  object-fit: cover; /* 잘림 방지 또는 채우기 */
+  border-radius: 8px;
+  margin: 15px auto;
+  display: block;
+}
 .no-image { color: #999; margin: 15px 0; }
 .modal-actions { display: flex; justify-content: space-between; margin-top: 15px; gap: 10px; }
 .cancel-btn { background-color: #fff; border: 1px solid #e44b4b; color: #e44b4b; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
 .cancel-btn:hover { background-color: #fdeaea; }
 .close-btn { background-color: #002b87; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
 .close-btn:hover { background-color: #001f5c; }
+
+.nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.nav-btn:hover {
+  background-color: #f2f4f7;
+}
+
+.nav-btn:active {
+  transform: scale(0.92);
+  background-color: #e5e7eb;
+}
+
+.material-icons {
+  font-size: 20px;
+  color: #344054;
+}
 </style>
