@@ -5,7 +5,6 @@
         <!-- 왼쪽: 로고 + 링크 -->
         <div class="footer-column">
 
-            <!-- 🔥 Header.vue 와 동일한 텍스트 로고 적용 -->
             <div class="footer-logo-text">
             KL<span class="footer-logo-umlaut">Ü</span>ME
             </div>
@@ -13,10 +12,11 @@
             <div class="footer-links">
             <a href="#" @click.prevent="openTerms">이용약관 및 개인정보처리방침</a>
             <a href="#" @click.prevent="openLicense">오픈소스 라이선스</a>
+            <a href="#" @click.prevent="goFAQ">FAQ</a>
             </div>
 
             <p class="footer-copyright">
-            © 2025 ThreeGo All rights reserved.
+            © 2025 OxAM All rights reserved.
             </p>
             <p class="footer-icons">
             Icons by <a href="https://icons8.com" target="_blank">Icons8</a>
@@ -26,7 +26,7 @@
         <!-- Contact -->
         <div class="footer-column">
             <h4>Contact</h4>
-            <p class="footer-contact">team.threego@gmail.com</p>
+            <p class="footer-contact">team.OxAM@gmail.com</p>
         </div>
 
         <!-- Socials -->
@@ -62,6 +62,10 @@ const openTerms = () => {
 const openLicense = () => {
     window.open('/open-source-license', '_blank')
 }
+
+const goFAQ = () => {
+    window.open('/faq', '_blank')
+}
 </script>
 
 <style scoped>
@@ -86,7 +90,6 @@ const openLicense = () => {
     font-size: 11px;
 }
 
-/* 🔥 Header와 동일한 텍스트 로고 스타일 */
 .footer-logo-text {
     font-size: 28px;
     font-weight: 700;
