@@ -22,7 +22,7 @@
       </section>
 
       <section class="footer-card">
-        <p>© 2025 ThreeGo. All rights reserved.</p>
+        <p>© 2025 OxAM. All rights reserved.</p>
       </section>
     </main>
   </div>
