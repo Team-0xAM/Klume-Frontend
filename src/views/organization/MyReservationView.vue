@@ -35,7 +35,7 @@
             <span
               class="status"
               :class="{
-                today: getStatus(item) === '오늘 이용',
+                today: getStatus(item) === '지금 이용',
                 upcoming: getStatus(item) === '이용 예정',
                 done: getStatus(item) === '이용 완료',
                 ongoing: getStatus(item) === '이용 중',
@@ -79,6 +79,16 @@
       @close="closeEnterModal"
       @success="handleEnterSuccess"
     />
+
+
+  <!-- 예약 취소 모달 -->
+  <BaseModal
+    :visible="showCancelModal"
+    title="예약 취소"
+    :message="cancelMessage"
+    @confirm="confirmCancel"
+    @cancel="closeCancelModal"
+  />
   </div>
 </template>
 
@@ -87,6 +97,7 @@ import { ref, computed } from "vue";
 import api from "@/api/axios";
 import { useRoute } from 'vue-router'
 import PhotoModal from "@/components/organization/PhotoModal.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
 
 const tabs = ["전체", "오늘", "예정", "지난"];
 const selectedTab = ref("전체");
@@ -95,6 +106,10 @@ const showPhotoModal = ref(false);
 const imageUrl = ref("");
 const showEnterModal = ref(false); 
 const currentReservation = ref(null); 
+const showCancelModal = ref(false)
+const cancelMessage = ref("")
+const reservationToCancel = ref(null)
+
 
 const route = useRoute()
 const organizationId = Number(route.params.organizationId)
@@ -130,13 +145,13 @@ function getStatus(r) {
 
   if (r.reservationStatus === "UPCOMING") {
     if (end < now) return "이용 완료";
-    if (start <= now && now <= end) return "오늘 이용";
+    if (start <= now && now <= end) return "입장 가능";
     return "이용 예정";
   }
 
   if (r.reservationStatus === "TODAY") {
     if (end < now) return "이용 완료";
-    if (start <= now && now <= end) return "오늘 이용";
+    if (start <= now && now <= end) return "입장 가능";
     return "이용 예정";
   }
 
@@ -155,7 +170,7 @@ function getButtonText(r) {
   const now = new Date();
   const start = toDateTime(r.reservationDate, r.startTime);
   const end = toDateTime(r.reservationDate, r.endTime);
-  if (status === "오늘 이용" && start <= now && now <= end) return "입장하기";
+  if (status === "입장 가능" && start <= now && now <= end) return "입장하기";
 
   if (status === "이용 완료" || status === "이용 중") return "이용 사진 보기";
 
@@ -165,34 +180,62 @@ function getButtonText(r) {
 }
 
 async function handleAction(item) {
-  const action = getButtonText(item);
+  const action = getButtonText(item)
 
   if (action === "예약 취소") {
-    if (!confirm("정말 예약을 취소하시겠습니까?")) return;
-    try {
-      await api.put(`/organizations/${organizationId}/reservations/${item.reservationId}/cancel`, { withCredentials: true });
-      alert("예약이 취소되었습니다.");
-      fetchMyReservations(); 
-    } catch (err) {
-      console.error("예약 취소 실패:", err);
-      alert("예약 취소 중 오류가 발생했습니다.");
+    const now = new Date()
+    const start = toDateTime(item.reservationDate, item.startTime)
+    const diffMinutes = (start - now) / 1000 / 60
+
+    if (diffMinutes < 60) {
+      cancelMessage.value =
+        "이용 시작 1시간 전부터는 취소 시 패널티가 부여됩니다. 예약을 취소하시겠습니까?"
+    } else {
+      cancelMessage.value = "회의실 예약을 취소하시겠습니까?"
     }
+
+    reservationToCancel.value = item
+    showCancelModal.value = true
+    return
   }
 
   if (action === "입장하기") {
-    currentReservation.value = item;
-    showEnterModal.value = true;
+    currentReservation.value = item
+    showEnterModal.value = true
   }
 
   if (action === "이용 사진 보기") {
     try {
-      const res = await api.get(`/organizations/${organizationId}/reservations/${item.reservationId}/photo`, { withCredentials: true });
-      imageUrl.value = res.data; 
-      showPhotoModal.value = true;
+      const res = await api.get(
+        `/organizations/${organizationId}/reservations/${item.reservationId}/photo`,
+        { withCredentials: true }
+      )
+      imageUrl.value = res.data
+      showPhotoModal.value = true
     } catch (err) {
-      console.error("이용 사진 가져오기 실패:", err);
-      alert("이용사진을 가져오는데 실패하였습니다.");
+      console.error("이용 사진 가져오기 실패:", err)
+      alert("이용사진을 가져오는데 실패하였습니다.")
     }
+  }
+}
+
+function closeCancelModal() {
+  showCancelModal.value = false
+  reservationToCancel.value = null
+}
+
+async function confirmCancel() {
+  try {
+    await api.put(
+      `/organizations/${organizationId}/reservations/${reservationToCancel.value.reservationId}/cancel`,
+      { withCredentials: true }
+    )
+    alert("예약이 취소되었습니다.")
+    showCancelModal.value = false
+    fetchMyReservations()
+  } catch (err) {
+    console.error("예약 취소 실패:", err)
+    alert("예약 취소 중 오류가 발생했습니다.")
   }
 }
 
