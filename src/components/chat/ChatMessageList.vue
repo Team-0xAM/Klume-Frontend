@@ -12,7 +12,7 @@
       >
         <div class="message-bubble">
           <div class="message-header">
-            <span class="sender-name">{{ message.senderId }}</span>
+            <span class="sender-name">{{ message.senderName || message.senderId }}</span>
             <span v-if="message.admin" class="admin-badge">관리자</span>
           </div>
           <!-- 이미지가 있으면 표시 -->

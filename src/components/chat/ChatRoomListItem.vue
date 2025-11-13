@@ -4,7 +4,7 @@
       <div class="user-info">
         <div class="user-avatar">{{ userInitial }}</div>
         <div class="user-details">
-          <div class="user-name">{{ chatRoom.createdByEmail || '알 수 없음' }}</div>
+          <div class="user-name">{{ chatRoom.createdByName || '알 수 없음' }}</div>
           <div class="last-message">{{ lastMessage }}</div>
         </div>
       </div>
@@ -63,8 +63,8 @@ const props = defineProps({
 defineEmits(['click', 'assign', 'unassign'])
 
 const userInitial = computed(() => {
-  const email = props.chatRoom.createdByEmail || '?'
-  return email.charAt(0).toUpperCase()
+  const name = props.chatRoom.createdByName || props.chatRoom.createdByEmail || '?'
+  return name.charAt(0).toUpperCase()
 })
 
 const lastMessage = computed(() => {
