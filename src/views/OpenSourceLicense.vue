@@ -1,33 +1,31 @@
 <template>
-    <div class="license-page">
-        <!-- 헤더 -->
-        <header>
-            <div class="container header-content" @click="goHome">
-                <h1>오픈소스 라이선스</h1>
-            </div>
-        </header>
+  <div class="license-wrapper">
+    <!-- 상단 헤더 -->
+    <header class="header" @click="goHome">
+      <div class="header-inner">
+        <h1>오픈소스 라이선스</h1>
+        <p class="header-sub">Klume 서비스에서 사용된 오픈소스 목록입니다.</p>
+      </div>
+    </header>
 
-        <!-- 메인 내용 -->
-        <main class="container">
-            <el-card class="card" shadow="hover">
-                <h2>사용된 오픈소스 목록</h2>
-                <p class="desc">
-                    Klume 서비스는 아래 오픈소스 소프트웨어를 사용하고 있으며,
-                    각 라이선스 및 저작권을 준수합니다.
-                </p>
+    <!-- 본문 카드 -->
+    <main class="content">
+      <section class="card">
+        <h2>사용된 오픈소스 목록</h2>
+        <p class="desc">
+          Klume 서비스는 다음 오픈소스 소프트웨어를 활용하며, 각 라이선스 및 저작권을 준수합니다.
+        </p>
 
-                <el-scrollbar height="400px">
-                    <pre class="license-text">{{ licenseText }}</pre>
-                </el-scrollbar>
-            </el-card>
+        <div class="scroll-area">
+          <pre class="license-text">{{ licenseText }}</pre>
+        </div>
+      </section>
 
-            <el-card class="card" shadow="never">
-                <footer>
-                    <p>© 2025 OxAM. All rights reserved.</p>
-                </footer>
-            </el-card>
-        </main>
-    </div>
+      <section class="footer-card">
+        <p>© 2025 ThreeGo. All rights reserved.</p>
+      </section>
+    </main>
+  </div>
 </template>
 
 <script setup>
@@ -40,90 +38,105 @@ const licenseText = ref('')
 const goHome = () => router.push('/')
 
 onMounted(async () => {
-    try {
-        const res = await fetch('/license.txt')
-        licenseText.value = await res.text()
-    } catch (err) {
-        licenseText.value = '라이선스 정보를 불러올 수 없습니다.'
-    }
+  try {
+    const res = await fetch('/license.txt')
+    licenseText.value = await res.text()
+  } catch (err) {
+    licenseText.value = '라이선스 정보를 불러올 수 없습니다.'
+  }
 })
 </script>
 
 <style scoped>
 :root {
-    --bg: #f7f8fb;
-    --card: #fff;
-    --accent: #0b57d0;
-    --muted: #666;
+  --primary: #0c1c54;
+  --accent: #3a7afe;
+  --bg: #f4f6fb;
+  --card-bg: #ffffff;
+  --border: #e6e8f0;
 }
 
-body {
-    font-family: Inter, Roboto, "Noto Sans KR", Arial, sans-serif;
-    background: var(--bg);
-    color: #111;
-    margin: 0;
+.license-wrapper {
+  background: var(--bg);
+  min-height: 100vh;
+  font-family: "Noto Sans KR", sans-serif;
 }
 
-header {
-    background: linear-gradient(90deg, #0b57d0 0%, #0c1c54 100%);
-    color: #fff;
-    padding: 24px 20px;
-    cursor: pointer;
+/* Header */
+.header {
+  background: linear-gradient(90deg, #0c1c54, #09317a);
+  padding: 30px;
+  color: white;
+  cursor: pointer;
 }
 
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.header-inner {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-.logo-icon {
-    width: 50px;
+.header h1 {
+  font-size: 26px;
+  margin: 0;
+  font-weight: 700;
 }
 
-.container {
-    max-width: 1000px;
-    margin: 24px auto;
-    padding: 0 20px;
+.header-sub {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+/* Content */
+.content {
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 0 20px;
 }
 
 .card {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 22px;
-    box-shadow: 0 6px 20px rgba(18, 28, 49, 0.06);
-    margin-bottom: 18px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
 }
 
-h1 {
-    font-size: 20px;
-    margin: 0;
-}
-
-h2 {
-    font-size: 18px;
-    color: var(--accent);
-    margin-bottom: 8px;
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: var(--primary);
 }
 
 .desc {
-    font-size: 14px;
-    color: #444;
-    margin-bottom: 16px;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 16px;
+}
+
+/* Scroll Area */
+.scroll-area {
+  max-height: 420px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 14px;
+  background: #fafbff;
 }
 
 .license-text {
-    white-space: pre-wrap;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    color: #222;
-    padding-right: 12px;
+  white-space: pre-wrap;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  color: #222;
 }
 
-footer {
-    font-size: 13px;
-    color: var(--muted);
-    text-align: center;
-    padding: 12px 0;
+/* Footer */
+.footer-card {
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: #777;
 }
 </style>

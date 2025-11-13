@@ -48,7 +48,7 @@ import { reactive } from 'vue'
 
 const teamMembers = reactive([
     { name: 'rosieisor', github: 'https://github.com/rosieisor' },
-    { name: 'pilltong', github: 'https://github.com/pilltong22' },
+    { name: 'pilltong22', github: 'https://github.com/pilltong22' },
     { name: 'ghi512', github: 'https://github.com/ghi512' },
     { name: 'HoodRyan', github: 'https://github.com/HoodRyan' },
     { name: 'YujinJeong1006', github: 'https://github.com/YujinJeong1006' },
