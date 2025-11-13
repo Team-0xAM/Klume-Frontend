@@ -86,8 +86,7 @@
           v-for="r in dayData.reserved"
           :key="r.id"
           class="card reserved"
-          @click="openModal(r)"
-        >
+          @click="openModal(r)" >
           <div class="card-main">
             <div class="left">
               <span class="room-name">{{ r.roomName }}</span>
@@ -147,9 +146,7 @@ import { getWeeklyReservations, getDailyReservations, cancelReservation } from "
 const route = useRoute()
 const organizationId = Number(route.params.organizationId)
 
-function formatDate(date) {
-  return date.toISOString().slice(0, 10)
-}
+function formatDate(date) { return date.toISOString().slice(0, 10) }
 function getWeekRange(baseDate) {
   const start = new Date(baseDate)
   start.setDate(start.getDate() - start.getDay() + 1)
@@ -157,12 +154,11 @@ function getWeekRange(baseDate) {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
     return formatDate(d)
-  })
-}
+  }) }
+
 function formatDay(d) {
   const day = ["일","월","화","수","목","금","토"][new Date(d).getDay()]
-  return `${d.slice(5)}(${day})`
-}
+  return `${d.slice(5)}(${day})` }
 
 const today = new Date()
 const selectedDate = ref(formatDate(today))
@@ -175,13 +171,9 @@ const dayData = ref({ available: [], reserved: [], pending: [] })
 const showModal = ref(false)
 const modalData = ref({})
 
-function openModal(r) {
-  modalData.value = r
-  showModal.value = true
-}
-function closeModal() {
-  showModal.value = false
-}
+function openModal(r) { modalData.value = r 
+                        showModal.value = true }
+function closeModal() { showModal.value = false }
 
 // API
 async function fetchWeekly() {
@@ -201,9 +193,7 @@ async function fetchWeekly() {
       })
       return acc
     }, [])
-  } catch (err) {
-    console.error("주간 예약 조회 실패:", err)
-  }
+  } catch (err) { console.error("주간 예약 조회 실패:", err) }
 }
 
 async function fetchDaily() {
@@ -239,6 +229,7 @@ async function prev() {
   weekDays.value = getWeekRange(target)
   await refreshView()
 }
+
 async function next() {
   const target = new Date(selectedDate.value)
   target.setDate(target.getDate() + (viewMode.value === "week" ? 7 : 1))
@@ -246,14 +237,17 @@ async function next() {
   weekDays.value = getWeekRange(target)
   await refreshView()
 }
+
 async function onDateChange() {
   weekDays.value = getWeekRange(new Date(selectedDate.value))
   await refreshView()
 }
+
 async function refreshView() {
   if (viewMode.value === "week") await fetchWeekly()
   else await fetchDaily()
 }
+
 async function toggleView() {
   viewMode.value = viewMode.value === "week" ? "day" : "week"
   await refreshView()
