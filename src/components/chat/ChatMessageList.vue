@@ -77,7 +77,7 @@ const isAtBottom = () => {
   if (!messageContainer.value) return false
   const threshold = 50 // 50px 이내면 맨 아래로 간주
   const { scrollTop, scrollHeight, clientHeight } = messageContainer.value
-  console.log('[isAtBottom] scrollTop:', scrollTop, 'scrollHeight:', scrollHeight, 'clientHeight:', clientHeight, 'distance from bottom:', scrollHeight - scrollTop - clientHeight)
+  //console.log('[isAtBottom] scrollTop:', scrollTop, 'scrollHeight:', scrollHeight, 'clientHeight:', clientHeight, 'distance from bottom:', scrollHeight - scrollTop - clientHeight)
   return scrollHeight - scrollTop - clientHeight < threshold
 }
 

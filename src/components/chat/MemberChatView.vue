@@ -86,8 +86,8 @@ const initializeChat = async () => {
   errorMessage.value = ''
 
   try {
-    // 1. 채팅방 조회/생성 API 호출
-    const response = await getOrCreateMyChatRoom(props.organization.organizationId, '안녕하세요, 문의 드립니다.')
+    // 1. 채팅방 조회/생성 API 호출 (더미 메시지 없이)
+    const response = await getOrCreateMyChatRoom(props.organization.organizationId, '')
     chatRoom.value = response.data
 
     // 2. 메시지 히스토리 로드
