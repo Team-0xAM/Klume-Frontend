@@ -131,7 +131,7 @@ onMounted(() => {
 <style scoped>
 .chat-message-list {
   /* flex: 1; */
-  height: 820px;       /* 임시 고정 높이 */
+  height: 850px;       /* 임시 고정 높이 */
   overflow-y: auto;
   padding: 20px;
   display: flex;
