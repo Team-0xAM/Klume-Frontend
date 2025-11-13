@@ -37,6 +37,7 @@ import AdminRoomPage from "@/views/room/AdminRoomPage.vue";
 import AdminRoomDetail from "@/views/room/AdminRoomDetail.vue";
 import ReservationPage from "@/views/reservation/ReservationPage.vue";
 import RoomDetail from "@/views/reservation/RoomDetail.vue";
+import AdminReservationPage from "@/views/adminreservation/AdminReservationPage.vue";
 
 // --- 대시보드 (조직 외부용) ---
 import DashboardMain from "@/views/dashboard/OrganizationDashboard.vue";
@@ -59,9 +60,6 @@ const routes = [
   { path: "/auth/login", component: LoginView, meta: { requiresGuest: true } },
   { path: "/auth/signup", component: SignupView, meta: { requiresGuest: true } },
   { path: "/oauth/callback", component: OAuthCallbackView },
-
-  /* 피그마용 삭제예정 */
-  { path: "/userhome", component: userhome },
 
   // 조직 관련
   { path: "/organization", component: OrganizationView, meta: { requiresAuth: true } },
@@ -94,26 +92,20 @@ const routes = [
       {
         path: "admin/reservations",
         name: "AdminReservationManage",
-        component: ReservationManage,
+        component: AdminReservationPage,
         meta: { requiresAdmin: true },
       },
       {
         path: "admin/rooms",
-
         name: "AdminRoomList",
-
         name: "AdminRoomListNested",
-
         component: AdminRoomPage,
         meta: { requiresAdmin: true },
       },
       {
         path: "admin/rooms/:roomId",
-
         name: "AdminRoomDetail",
-
         name: "AdminRoomDetailNested",
-
         component: AdminRoomDetail,
         meta: { requiresAdmin: true },
       },
