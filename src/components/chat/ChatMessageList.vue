@@ -8,9 +8,16 @@
       <div
         v-for="(message, index) in messages"
         :key="message.id || index"
-        :class="['message-wrapper', { 'my-message': isMyMessage(message) }]"
+        :class="['message-wrapper', { 'my-message': isMyMessage(message), 'system-message': isSystemMessage(message) }]"
       >
-        <div class="message-bubble">
+        <!-- 시스템 메시지 (공지 스타일) -->
+        <div v-if="isSystemMessage(message)" class="system-notification">
+          <span class="system-text">{{ message.content }}</span>
+          <span class="system-time">{{ formatTime(message.createdAt) }}</span>
+        </div>
+
+        <!-- 일반 메시지 -->
+        <div v-else class="message-bubble">
           <div class="message-header">
             <span class="sender-name">{{ message.senderName || message.senderId }}</span>
             <span v-if="message.admin" class="admin-badge">관리자</span>
@@ -48,6 +55,11 @@ const isUserScrolling = ref(false)
 // 내 메시지인지 확인
 const isMyMessage = (message) => {
   return message.senderId === props.currentUserId
+}
+
+// 시스템 메시지인지 확인 (senderId가 "SYSTEM"이거나 없는 경우)
+const isSystemMessage = (message) => {
+  return message.senderId === 'SYSTEM' || message.isSystemMessage === true
 }
 
 // 이미지 모달 열기 (새 창으로)
@@ -163,12 +175,16 @@ onMounted(() => {
   width: 100%;
 }
 
-.message-wrapper:not(.my-message) {
+.message-wrapper:not(.my-message):not(.system-message) {
   justify-content: flex-start;
 }
 
 .message-wrapper.my-message {
   justify-content: flex-end;
+}
+
+.message-wrapper.system-message {
+  justify-content: center;
 }
 
 .message-bubble {
@@ -267,6 +283,31 @@ onMounted(() => {
 .my-message .message-time {
   text-align: right;
   color: #666;
+}
+
+/* 시스템 공지 메시지 스타일 */
+.system-notification {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background-color: rgba(12, 28, 84, 0.05);
+  border: 1px dotted rgba(12, 28, 84, 0.2);
+  border-radius: 8px;
+  max-width: 80%;
+}
+
+.system-text {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.system-time {
+  font-size: 11px;
+  color: #999;
 }
 
 /* 스크롤바 스타일링 */
