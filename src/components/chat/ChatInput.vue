@@ -7,7 +7,13 @@
     </div>
 
     <!-- 일반 입력창 -->
-    <div v-else class="input-wrapper">
+    <div
+      v-else
+      class="input-wrapper"
+      @dragover.prevent="handleDragOver"
+      @dragleave.prevent="handleDragLeave"
+      @drop.prevent="handleDrop"
+    >
       <!-- 이미지 미리보기 -->
       <div v-if="selectedImage" class="image-preview-container">
         <div class="image-preview">
@@ -21,6 +27,22 @@
       </div>
 
       <div class="input-container">
+        <!-- 드래그 오버레이 -->
+        <div v-if="isDragging" class="drag-overlay">
+          <div class="drag-content">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <p>이미지를 여기에 올려놓으세요</p>
+          </div>
+        </div>
+
         <!-- 이미지 업로드 버튼 -->
         <input
           type="file"
@@ -97,6 +119,7 @@ const textareaRef = ref(null)
 const fileInput = ref(null)
 const selectedImage = ref(null)
 const imagePreviewUrl = ref('')
+const isDragging = ref(false)
 
 // 파일 선택 다이얼로그 열기
 const openFileDialog = () => {
@@ -158,6 +181,33 @@ const handleNewLine = (event) => {
   // 기본 동작 허용 (줄바꿈)
 }
 
+// 드래그 오버 처리
+const handleDragOver = (event) => {
+  event.preventDefault()
+  isDragging.value = true
+}
+
+// 드래그 떠남 처리
+const handleDragLeave = (event) => {
+  event.preventDefault()
+  isDragging.value = false
+}
+
+// 드롭 처리
+const handleDrop = (event) => {
+  event.preventDefault()
+  isDragging.value = false
+
+  const files = event.dataTransfer.files
+  if (files.length > 0) {
+    const file = files[0]
+    if (file.type.startsWith('image/')) {
+      selectedImage.value = file
+      imagePreviewUrl.value = URL.createObjectURL(file)
+    }
+  }
+}
+
 // textarea 자동 높이 조절
 watch(message, () => {
   nextTick(() => {
@@ -199,6 +249,22 @@ watch(message, () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 120px;
+}
+
+.drag-content {
+  text-align: center;
+  color: #0c1c54;
+}
+
+.drag-content svg {
+  margin-bottom: 4px;
+}
+
+.drag-content p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .image-preview-container {
@@ -250,10 +316,24 @@ watch(message, () => {
   padding: 12px 16px;
   border: 1px solid #e0e0e0;
   transition: border-color 0.2s;
+  position: relative;
 }
 
 .input-container:focus-within {
   border-color: #0c1c54;
+}
+
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(12, 28, 84, 0.05);
+  border: 2px dashed #0c1c54;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .attach-button {
