@@ -1,8 +1,13 @@
 // src/utils/auth.js
+import { ref } from 'vue'
+
+// 반응형 로그인 상태
+export const isLoggedIn = ref(!!localStorage.getItem('accessToken'))
 
 // 토큰 저장
 export const setAccessToken = (token) => {
   localStorage.setItem('accessToken', token)
+  isLoggedIn.value = true
 }
 
 // 토큰 가져오기
@@ -13,6 +18,7 @@ export const getAccessToken = () => {
 // 토큰 삭제
 export const removeAccessToken = () => {
   localStorage.removeItem('accessToken')
+  isLoggedIn.value = false
 }
 
 // 사용자 이메일 저장
@@ -55,4 +61,5 @@ export const logout = () => {
   removeAccessToken()
   removeUserEmail()
   removeProfileImage()
+  isLoggedIn.value = false
 }

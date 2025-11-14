@@ -1,47 +1,35 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { isAuthenticated, getUserEmail, getProfileImage, logout } from '@/utils/auth'
+import { isLoggedIn, getUserEmail, getProfileImage, logout } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
-const isLoggedIn = ref(false)
-const userEmail = ref('')
-const profileImage = ref('')
+const userEmail = ref(getUserEmail() || '')
+const profileImage = ref(getProfileImage() || '')
 const showLogoutModal = ref(false)
 
-// 로그인 상태 확인 함수
-const checkAuthStatus = () => {
-  const authenticated = isAuthenticated()
-  const email = getUserEmail()
-  const image = getProfileImage()
-
-  isLoggedIn.value = authenticated
-  userEmail.value = email || ''
-  profileImage.value = image || ''
-}
-
-// 컴포넌트 마운트 시 체크
-onMounted(() => {
-  checkAuthStatus()
+// 로그인 상태 변경 시 사용자 정보 업데이트
+watch(isLoggedIn, () => {
+  userEmail.value = getUserEmail() || ''
+  profileImage.value = getProfileImage() || ''
 })
 
-// 라우트 변경 시 체크 (로그인/로그아웃 후 자동 업데이트)
+// 라우트 변경 시 사용자 정보 업데이트
 watch(() => route.path, () => {
-  checkAuthStatus()
-}, { immediate: true })
-
-// localStorage 변경 감지 (같은 탭에서 로그인 시)
-watch(() => [isAuthenticated(), getUserEmail(), getProfileImage()], () => {
-  checkAuthStatus()
+  userEmail.value = getUserEmail() || ''
+  profileImage.value = getProfileImage() || ''
 })
 
 // storage 이벤트 감지 (다른 탭에서 로그인/로그아웃 시)
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', checkAuthStatus)
+const handleStorageChange = () => {
+  userEmail.value = getUserEmail() || ''
+  profileImage.value = getProfileImage() || ''
+}
 
-  // 페이지 포커스 시에도 체크 (다른 탭에서 로그인한 경우)
-  window.addEventListener('focus', checkAuthStatus)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', handleStorageChange)
+  window.addEventListener('focus', handleStorageChange)
 }
 
 // 라우팅 이동 함수
@@ -62,7 +50,6 @@ const getInitial = (email) => {
 // 로그아웃 처리
 const handleLogout = () => {
   logout()
-  checkAuthStatus()
   showLogoutModal.value = false
   router.push('/home')
 }

@@ -7,14 +7,11 @@ import ChatSidePanel from './components/common/ChatSidePanel.vue'
 import MemberChatOrganizationList from './components/chat/MemberChatOrganizationList.vue'
 import MemberChatView from './components/chat/MemberChatView.vue'
 import { useChatPanel } from './composables/useChatPanel'
-import { isAuthenticated } from './utils/auth'
+import { isLoggedIn } from './utils/auth'
 import Footer from "@/components/footer/Footer.vue";
 
 const route = useRoute()
 const { isPanelOpen, selectedOrganization, closePanel } = useChatPanel()
-
-// 로그인 상태 확인
-const isLoggedIn = computed(() => isAuthenticated())
 
 // 관리자 채팅 페이지인지 확인
 const isAdminChatPage = computed(() => {
