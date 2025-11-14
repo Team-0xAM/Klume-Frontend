@@ -169,16 +169,21 @@ const formatDate = (dateStr) => {
 };
 
 // 예약 오픈 상태 판별 (오늘 날짜 + 오픈 시각 기준)
+// 반환값: true = 오픈 예정, false = 예약 가능
 const isReservationOpen = (openDay, openTime) => {
-    if (!openDay || !openTime) return false;
+    if (!openDay || !openTime) return false; // 오픈 시간이 없으면 예약 가능 (false)
 
     const now = new Date();
-    const [hours, minutes] = openTime.split(':');
-    const openDateTime = new Date(openDay);
-    openDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-    // 현재 시간이 오픈 시간 이후면 예약 가능 (오픈예정 아님 = false)
-    // 현재 시간이 오픈 시간 이전이면 아직 오픈예정 (true)
+    // openDay는 YYYY-MM-DD 형식이므로 로컬 타임존으로 파싱
+    const [year, month, day] = openDay.split('-').map(Number);
+    const [hours, minutes] = openTime.split(':').map(Number);
+
+    // 로컬 타임존 기준으로 오픈 날짜/시간 생성
+    const openDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
+
+    // 현재 시간이 오픈 시간보다 이전이면 오픈예정 (true)
+    // 현재 시간이 오픈 시간 이후면 예약 가능 (false)
     return now < openDateTime;
 };
 

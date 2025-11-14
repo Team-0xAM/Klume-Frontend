@@ -123,9 +123,9 @@ watch(() => props.time, (t) => {
     // 예약 오픈 설정 파싱
     openDaysBefore: t.openTime && t.openTime.includes("일전")
       ? Number(t.openTime.split("일전")[0])
-      : "",
+      : (t.openTime && t.openTime.includes(":") && !t.openTime.includes("일전") ? 0 : ""),
     openTime: t.openTime && t.openTime.includes(":")
-      ? t.openTime.split(" ")[1]
+      ? (t.openTime.includes(" ") ? t.openTime.split(" ")[1] : t.openTime)
       : "",
 
     repeatType: (t.repeatStart && t.repeatEnd && t.repeatStart !== t.repeatEnd) ? "repeat" : "single"
