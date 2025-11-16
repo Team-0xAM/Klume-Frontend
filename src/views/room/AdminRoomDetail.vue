@@ -130,15 +130,28 @@ function formatOpenTime(openTime) {
 
     if (openTime === "상시") return "상시"
 
-    // 예: "1일전 00:00" → ["1일전", "00:00"]
+    // 예: "1일전 00:00" → ["1일전", "00:00"] 또는 "00:00" (0일전인 경우)
     const parts = openTime.split(" ")
 
     if (parts.length === 2) {
-        const dayPart = parts[0].replace("일전", "일 전")
+        const dayPart = parts[0]
         const timePart = parts[1]
+
+        // "0일전"인 경우 "당일"로 표시
+        if (dayPart === "0일전") {
+            return `당일 ${timePart}`
+        }
+
+        const formattedDayPart = dayPart.replace("일전", "일 전")
         // 00:00 이면 시간 표시 안 함
-        return timePart === "00:00" ? dayPart : `${dayPart} ${timePart}`
+        return timePart === "00:00" ? formattedDayPart : `${formattedDayPart} ${timePart}`
     }
+
+    // "일전"이 없는 경우 (0일전으로 저장되었을 때)
+    if (openTime.includes(":") && !openTime.includes("일전")) {
+        return `당일 ${openTime}`
+    }
+
     return openTime
 }
 
@@ -195,8 +208,8 @@ async function fetchAvailableTimes() {
         interval: t.timeInterval ? String(t.timeInterval) : "-",
 
         // 예약 오픈 표시
-        openTime: t.reservationOpenDay !== null
-        ? `${t.reservationOpenDay}일전 ${t.reservationOpenTime || "00:00"}`
+        openTime: (t.reservationOpenDay !== null && t.reservationOpenDay !== undefined) && t.reservationOpenTime
+        ? `${t.reservationOpenDay}일전 ${t.reservationOpenTime}`
         : "상시",
 
     // 반복 요일
@@ -246,7 +259,7 @@ async function updateTime(form) {
     availableStartTime: form.startTime,
     availableEndTime: form.endTime,
 
-    reservationOpenDay: form.openDaysBefore ? Number(form.openDaysBefore) : null,
+    reservationOpenDay: form.openDaysBefore !== "" && form.openDaysBefore !== null && form.openDaysBefore !== undefined ? Number(form.openDaysBefore) : null,
     reservationOpenTime: form.openTime || null,
 
     repeatStartDay: form.repeatType === "repeat" ? form.repeatStart : form.singleDate,
@@ -296,8 +309,8 @@ async function saveAvailableTime(form) {
     availableStartTime: form.startTime,
     availableEndTime: form.endTime,
 
-    // 예약 오픈 설정 (값 없으면 null)
-    reservationOpenDay: form.openDaysBefore ? Number(form.openDaysBefore) : null,
+    // 예약 오픈 설정 (값 없으면 null, 0은 유효한 값)
+    reservationOpenDay: form.openDaysBefore !== "" && form.openDaysBefore !== null && form.openDaysBefore !== undefined ? Number(form.openDaysBefore) : null,
     reservationOpenTime: form.openTime || null,
 
     // 반복/하루 처리 (빈 문자열 → null)

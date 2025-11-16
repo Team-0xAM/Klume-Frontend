@@ -91,26 +91,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in reservations" :key="index">
+          <tr v-for="(item, index) in reservations" :key="item.dailyAvailableTimeId || index">
             <td>{{ index + 1 }}</td>
             <td>{{ item.timeName }}</td>
             <td class="time-cell">{{ item.startTime }} - {{ item.endTime }}</td>
             <td>
-              <span 
+              <span
                 class="status-badge"
                 :class="{
-                  'reserved': getStatusText(item) === '예약 됨',
-                  'opening': getStatusText(item) === '오픈 예정',
-                  'available': getStatusText(item) === '예약 가능'
+                  'reserved': item.status === 'RESERVED',
+                  'opening': isOpeningStatus(item),
+                  'available': isActuallyAvailable(item)
                 }"
               >
-                {{ getStatusText(item) }}
+                {{ isOpeningStatus(item) ? '오픈 예정' : (isActuallyAvailable(item) ? '예약 가능' : (item.status === 'RESERVED' ? '예약 됨' : '예약 불가')) }}
               </span>
               <div v-if="item.status === 'RESERVED' && item.reservedMember" class="reserved-info">
               </div>
             </td>
             <td class="open-time-cell">
-              <div v-if="item.status === 'OPENING_SOON'">
+              <div v-if="isOpeningStatus(item)">
                 <div v-if="isOpeningSoon(item)" class="countdown">
                   {{ getCountdown(item) }} 후<br/>오픈 예정
                 </div>
@@ -118,7 +118,7 @@
                   {{ formatOpenTime(item) }}
                 </div>
               </div>
-              <div v-else-if="item.status === 'AVAILABLE'">
+              <div v-else-if="(item.reservationOpenDay === null || item.reservationOpenDay === undefined) && !item.reservationOpenTime">
                 상시
               </div>
               <div v-else>
@@ -126,28 +126,28 @@
               </div>
             </td>
             <td>
-              <button 
-                v-if="item.status === 'AVAILABLE' && !isTimePassed(item)"
+              <button
+                v-if="isActuallyAvailable(item)"
                 class="reserve-btn available"
                 @click="handleReserve(item)"
               >
                 예약하기
               </button>
-              <button 
+              <button
                 v-else-if="item.status === 'AVAILABLE' && isTimePassed(item)"
                 class="reserve-btn closed"
                 disabled
               >
                 시간 마감
               </button>
-              <button 
-                v-else-if="item.status === 'OPENING_SOON'"
+              <button
+                v-else-if="isOpeningStatus(item)"
                 class="reserve-btn opening"
                 disabled
               >
                 오픈 예정
               </button>
-              <button 
+              <button
                 v-else
                 class="reserve-btn reserved"
                 disabled
@@ -214,14 +214,24 @@ const fetchMeetingRooms = async () => {
 // 예약 현황 조회
 async function fetchReservations() {
   if (!selectedRoomId.value || !selectedDate.value) return
-  
+
   try {
     const res = await getAvailableTimes(organizationId, selectedDate.value)
-    
+
     if (Array.isArray(res.data)) {
-      reservations.value = res.data.filter(
+      const filtered = res.data.filter(
         item => item.roomId === Number(selectedRoomId.value)
       )
+
+      // dailyAvailableTimeId 기준으로 중복 제거
+      const uniqueMap = new Map()
+      filtered.forEach(item => {
+        if (item.dailyAvailableTimeId) {
+          uniqueMap.set(item.dailyAvailableTimeId, item)
+        }
+      })
+
+      reservations.value = Array.from(uniqueMap.values())
     } else {
       console.error('Unexpected data format:', res.data)
       reservations.value = []
@@ -232,27 +242,64 @@ async function fetchReservations() {
   }
 }
 
+// 예약 오픈 시간 검증
+function checkReservationOpenTime(item) {
+  // reservation_open_day와 reservation_open_time이 없으면 상시 예약 가능
+  // 주의: reservationOpenDay가 0일 수 있으므로 null/undefined만 체크
+  if ((item.reservationOpenDay === null || item.reservationOpenDay === undefined) || !item.reservationOpenTime) {
+    return { canReserve: true, message: '' }
+  }
+
+  const now = new Date()
+
+  // selectedDate를 로컬 타임존으로 파싱
+  const [year, month, day] = selectedDate.value.split('-').map(Number)
+  const openDate = new Date(year, month - 1, day)
+  openDate.setDate(openDate.getDate() - item.reservationOpenDay)
+
+  const [hours, minutes] = item.reservationOpenTime.split(':').map(Number)
+  openDate.setHours(hours, minutes, 0, 0)
+
+  // 현재 시간이 오픈 시간보다 이전이면 예약 불가
+  if (now < openDate) {
+    const timeString = formatOpenTime(item)
+    return {
+      canReserve: false,
+      message: `이 시간대는 ${timeString}에 예약이 오픈됩니다.`
+    }
+  }
+
+  return { canReserve: true, message: '' }
+}
+
 // 예약하기
 async function handleReserve(item) {
+  // 예약 오픈 시간 검증
+  const openTimeCheck = checkReservationOpenTime(item)
+  if (!openTimeCheck.canReserve) {
+    alert(openTimeCheck.message)
+    return
+  }
+
   const confirmReserve = confirm(
     `${item.timeName} (${item.startTime} - ${item.endTime})을 예약하시겠습니까?`
   )
-  
+
   if (!confirmReserve) return
-  
+
   try {
     await createReservation(
       organizationId,
       item.roomId,
       item.dailyAvailableTimeId
     )
-    
+
     alert('예약이 완료되었습니다.')
-    
+
     await fetchReservations()
   } catch (err) {
     console.error('예약 실패:', err)
-    
+
     if (err.response?.data?.message) {
       alert(`예약 실패: ${err.response.data.message}`)
     } else {
@@ -372,49 +419,58 @@ function getStatusText(item) {
 
 // 오픈 시간 포맷 (11.09 09:00)
 function formatOpenTime(item) {
-  if (!item.reservationOpenDay || !item.reservationOpenTime) return '-'
-  
-  const openDate = new Date(selectedDate.value)
+  // null/undefined만 체크 (0은 유효한 값)
+  if ((item.reservationOpenDay === null || item.reservationOpenDay === undefined) || !item.reservationOpenTime) return '-'
+
+  // selectedDate를 로컬 타임존으로 파싱
+  const [year, month, day] = selectedDate.value.split('-').map(Number)
+  const openDate = new Date(year, month - 1, day)
   openDate.setDate(openDate.getDate() - item.reservationOpenDay)
-  
-  const month = String(openDate.getMonth() + 1).padStart(2, '0')
-  const day = String(openDate.getDate()).padStart(2, '0')
-  
-  return `${month}.${day} ${item.reservationOpenTime}`
+
+  const displayMonth = String(openDate.getMonth() + 1).padStart(2, '0')
+  const displayDay = String(openDate.getDate()).padStart(2, '0')
+
+  return `${displayMonth}.${displayDay} ${item.reservationOpenTime}`
 }
 
 // 1시간 이내 오픈 예정인지 확인
 function isOpeningSoon(item) {
-  if (!item.reservationOpenDay || !item.reservationOpenTime) return false
-  
-  const openDate = new Date(selectedDate.value)
+  // null/undefined만 체크 (0은 유효한 값)
+  if ((item.reservationOpenDay === null || item.reservationOpenDay === undefined) || !item.reservationOpenTime) return false
+
+  // selectedDate를 로컬 타임존으로 파싱
+  const [year, month, day] = selectedDate.value.split('-').map(Number)
+  const openDate = new Date(year, month - 1, day)
   openDate.setDate(openDate.getDate() - item.reservationOpenDay)
-  
-  const [hours, minutes] = item.reservationOpenTime.split(':')
-  openDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-  
+
+  const [hours, minutes] = item.reservationOpenTime.split(':').map(Number)
+  openDate.setHours(hours, minutes, 0, 0)
+
   const diff = openDate.getTime() - currentTime.value.getTime()
-  return diff > 0 && diff <= 3600000
+  return diff > 0 && diff <= 3600000 // 1시간 = 3600000ms
 }
 
 // 카운트다운 계산
 function getCountdown(item) {
-  if (!item.reservationOpenDay || !item.reservationOpenTime) return ''
-  
-  const openDate = new Date(selectedDate.value)
+  // null/undefined만 체크 (0은 유효한 값)
+  if ((item.reservationOpenDay === null || item.reservationOpenDay === undefined) || !item.reservationOpenTime) return ''
+
+  // selectedDate를 로컬 타임존으로 파싱
+  const [year, month, day] = selectedDate.value.split('-').map(Number)
+  const openDate = new Date(year, month - 1, day)
   openDate.setDate(openDate.getDate() - item.reservationOpenDay)
-  
-  const [hours, minutes] = item.reservationOpenTime.split(':')
-  openDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-  
+
+  const [hours, minutes] = item.reservationOpenTime.split(':').map(Number)
+  openDate.setHours(hours, minutes, 0, 0)
+
   const diff = openDate.getTime() - currentTime.value.getTime()
-  
+
   if (diff <= 0) return '곧 오픈'
-  
+
   const totalMinutes = Math.floor(diff / 60000)
   const displayHours = Math.floor(totalMinutes / 60)
   const displayMinutes = totalMinutes % 60
-  
+
   if (displayHours > 0) {
     return `${String(displayHours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}`
   }
@@ -424,20 +480,47 @@ function getCountdown(item) {
 // 시간이 지났는지 확인
 function isTimePassed(item) {
   if (!item.endTime) return false
-  
+
   const today = new Date()
   const selectedDateObj = new Date(selectedDate.value)
-  
+
   // 선택된 날짜가 오늘이 아니면 false
   if (selectedDateObj.toDateString() !== today.toDateString()) {
     return selectedDateObj < today
   }
-  
+
   const [hours, minutes] = item.endTime.split(':')
   const endDateTime = new Date(selectedDate.value)
   endDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-  
+
   return currentTime.value >= endDateTime
+}
+
+// 실제로 예약 가능한 상태인지 확인 (오픈 시간 + 백엔드 status 종합 판단)
+function isActuallyAvailable(item) {
+  // 백엔드 status가 AVAILABLE이 아니면 예약 불가
+  if (item.status !== 'AVAILABLE') return false
+
+  // 시간이 지났으면 예약 불가
+  if (isTimePassed(item)) return false
+
+  // 오픈 시간 검증
+  const openTimeCheck = checkReservationOpenTime(item)
+  return openTimeCheck.canReserve
+}
+
+// 오픈 예정 상태인지 확인
+function isOpeningStatus(item) {
+  // 백엔드에서 OPENING_SOON으로 보내면 오픈 예정
+  if (item.status === 'OPENING_SOON') return true
+
+  // AVAILABLE이어도 오픈 시간이 안 되었으면 오픈 예정
+  if (item.status === 'AVAILABLE') {
+    const openTimeCheck = checkReservationOpenTime(item)
+    return !openTimeCheck.canReserve
+  }
+
+  return false
 }
 
 function startCountdown() {
